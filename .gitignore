@@ -49,6 +49,7 @@ build/
 
 /.claude/settings.local.json
 
+/.codex/agents/
 /.codex/sessions/
 /.codex/tmp
 /.codex/log/
