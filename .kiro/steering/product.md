@@ -8,6 +8,7 @@ ZAIN（ZAIN Agent Intention Network）は、[TAKT](https://github.com/nrslib/tak
 - **TAKTドメインモデルの踏襲**: Piece（ピース）、Facet（ファセット: Persona / Policy / Instruction / Knowledge / Output Contract）といったTAKTの概念モデルをScalaの型として表現する。
 - **YAMLインターフェースなし**: TAKTがYAMLで宣言的にワークフローを定義するのに対し、ZAINはScala DSLベースでプログラマティックにワークフローを構築する方針を取る。
 - **MCPクライアント経由のLLM接続**: Codex MCP / Claude Code MCPサーバにMCPクライアントで接続し、CLI起動コストを回避する。
+- **単一SDKアダプタ + Provider切替**: 実装は `mcp-sdk-client` モジュールの `McpSdkClientAdapter` に集約し、`McpProvider` でCodex / Claude Codeを切り替える。
 
 ## Target Use Cases
 
@@ -22,3 +23,8 @@ ZAIN（ZAIN Agent Intention Network）は、[TAKT](https://github.com/nrslib/tak
 ## Value Proposition
 
 現在はTAKTの概念をMCPクライアント基盤として段階的に取り込み、将来的にScalaの型システムとPekko-Streamのリアクティブストリーム処理へ融合させる。YAMLの手軽さの代わりに、コンパイル時型検査・ストリーム合成・バックプレッシャー制御といったプログラマティックな利点を得る。
+
+## Steering Metadata
+
+- updated_at: 2026-02-20T17:57:41Z
+- sync_reason: 実装が `mcp-sdk-client` 集約構成である点を追記し、現行アーキテクチャとの整合性を強化

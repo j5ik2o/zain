@@ -19,10 +19,9 @@
 ## 現在の実装範囲
 
 - `core`: MCP連携に必要なドメイン型（`McpClient`, `McpSessionCatalog`, `McpCallToolRequest` など）
-- `codex-client`: Codex MCPアダプタ
-- `claude-code-client`: Claude Code MCPアダプタ
-- `contract-tests`: `McpClient` 共通契約の検証
-- `e2e-tests`: 実CLI経由の接続検証
+- `mcp-sdk-client`: MCP Java SDKを使う単一アダプタ実装（`McpSdkClientAdapter`, `McpSdkTransportFactory`）
+- `contract-tests`: `McpClient` 共通契約の検証（Codex / Claude Code のProvider差分を同一契約で検証）
+- `e2e-tests`: 実CLI経由の接続検証 + SDK直結検証（`McpSdkDirectE2ESpec`）
 
 ## 今後の実装範囲（Planned）
 
@@ -40,7 +39,7 @@
 ### Type Safety
 - 接続設定は `McpConnectionConfig` のADT（`Stdio` / `StreamableHttp` / `Sse`）で表現する。
 - ツール引数は `McpCallToolArgument` で表現し、`Any` を使わない。
-- 不変性を優先する（case class, 不変コレクション）。
+- 不変性を優先する（case class, 不変コレクション）。ただしセッションライフサイクル管理では同期付き可変Mapを局所的に使用する。
 
 ### Code Quality
 - 1公開型 = 1ファイル。
@@ -48,7 +47,7 @@
 - 既存コードのパターンを分析してから新しいコードを書く。
 
 ### Testing
-- `sbt test` で `core` / `codex-client` / `claude-code-client` / `contract-tests` / `e2e-tests` を実行。
+- `sbt test` で `core` / `mcp-sdk-client` / `contract-tests` / `e2e-tests` を実行。
 - `e2e-tests` は外部CLIがない環境では `assume` でスキップする。
 
 ## Development Environment
@@ -63,5 +62,20 @@
 sbt compile
 sbt test
 sbt "project core" compile
+sbt "project mcpSdkClient" compile
+sbt "project contractTests" test
 sbt "project e2eTests" test
 ```
+
+## Key Technical Decisions
+
+- Providerごとに実装モジュールを分けず、`McpProvider` と `McpSdkClientAdapter` の組み合わせでCodex / Claude Codeを切り替える。
+- 接続方式は `McpConnectionConfig`（`Stdio` / `StreamableHttp` / `Sse`）ADTで表現し、呼び出し側の分岐を局所化する。
+- MCP SDKのレスポンス揺らぎを吸収するため、`McpSdkTransportFactory` でlenientなJSONマッパーを構築する。
+- セッションの生存状態は `McpSessionCatalog` で管理し、`SessionNotFound` / `SessionClosed` 契約を明確化する。
+- セッション管理の実装は局所的な同期付き可変状態（`McpSessionCatalog`, `McpSdkClientAdapter`）を許容し、公開APIは `McpResult` と不変値で安定化する。
+
+## Steering Metadata
+
+- updated_at: 2026-02-20T17:57:41Z
+- sync_reason: `codex-client` / `claude-code-client` 前提の記述を `mcp-sdk-client` 集約実装へ同期
