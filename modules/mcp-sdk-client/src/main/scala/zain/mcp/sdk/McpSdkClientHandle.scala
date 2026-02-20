@@ -1,11 +1,11 @@
-package zain.mcp.claude
+package zain.mcp.sdk
 
 import zain.core.mcp.McpCallToolRequest
 import zain.core.mcp.McpCallToolResult
 import zain.core.mcp.McpError
 import zain.core.mcp.McpToolInfo
 
-trait ClaudeCodeClientHandle:
+trait McpSdkClientHandle:
   def listTools(): Either[McpError.ConnectionUnavailable.type, Seq[McpToolInfo]]
 
   def callTool(request: McpCallToolRequest): Either[McpError.ConnectionUnavailable.type, McpCallToolResult]

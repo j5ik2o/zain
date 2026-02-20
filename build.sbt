@@ -9,7 +9,7 @@ lazy val commonSettings = Seq(
 )
 
 lazy val root = (project in file("."))
-  .aggregate(core, codexClient, claudeCodeClient, contractTests, e2eTests)
+  .aggregate(core, mcpSdkClient, contractTests, e2eTests)
   .settings(commonSettings)
   .settings(
     name := "zain"
@@ -21,22 +21,11 @@ lazy val core = (project in file("modules/core"))
     name := "core"
   )
 
-lazy val codexClient = (project in file("modules/codex-client"))
+lazy val mcpSdkClient = (project in file("modules/mcp-sdk-client"))
   .dependsOn(core)
   .settings(commonSettings)
   .settings(
-    name := "codex-client",
-    libraryDependencies ++= Seq(
-      "io.modelcontextprotocol.sdk" % "mcp-core" % mcpSdkVersion,
-      "io.modelcontextprotocol.sdk" % "mcp-json-jackson3" % mcpSdkVersion
-    )
-  )
-
-lazy val claudeCodeClient = (project in file("modules/claude-code-client"))
-  .dependsOn(core)
-  .settings(commonSettings)
-  .settings(
-    name := "claude-code-client",
+    name := "mcp-sdk-client",
     libraryDependencies ++= Seq(
       "io.modelcontextprotocol.sdk" % "mcp-core" % mcpSdkVersion,
       "io.modelcontextprotocol.sdk" % "mcp-json-jackson3" % mcpSdkVersion
@@ -44,14 +33,14 @@ lazy val claudeCodeClient = (project in file("modules/claude-code-client"))
   )
 
 lazy val contractTests = (project in file("modules/contract-tests"))
-  .dependsOn(core, codexClient, claudeCodeClient)
+  .dependsOn(core, mcpSdkClient)
   .settings(commonSettings)
   .settings(
     name := "contract-tests"
   )
 
 lazy val e2eTests = (project in file("modules/e2e-tests"))
-  .dependsOn(core, codexClient, claudeCodeClient)
+  .dependsOn(core, mcpSdkClient)
   .settings(commonSettings)
   .settings(
     name := "e2e-tests",

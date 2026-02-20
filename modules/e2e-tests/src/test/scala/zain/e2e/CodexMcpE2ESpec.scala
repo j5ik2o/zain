@@ -4,10 +4,11 @@ import scala.util.Try
 
 import org.scalatest.funsuite.AnyFunSuite
 import zain.core.mcp.McpConnectionConfig
+import zain.core.mcp.McpProvider
 import zain.core.mcp.McpResult
 import zain.core.mcp.McpSessionCatalog
-import zain.mcp.codex.CodexMcpClientAdapter
-import zain.mcp.codex.CodexTransportFactory
+import zain.mcp.sdk.McpSdkClientAdapter
+import zain.mcp.sdk.McpSdkTransportFactory
 
 final class CodexMcpE2ESpec extends AnyFunSuite:
   private def commandExists(command: String): Boolean =
@@ -21,7 +22,7 @@ final class CodexMcpE2ESpec extends AnyFunSuite:
   test("should open session to real Codex MCP server"):
     assume(commandExists("codex"), "codex CLI is not installed")
 
-    val adapter = new CodexMcpClientAdapter(new CodexTransportFactory, new McpSessionCatalog)
+    val adapter = new McpSdkClientAdapter(McpProvider.Codex, new McpSdkTransportFactory, new McpSessionCatalog)
     val result = adapter.openSession(codexConfig)
 
     result match
@@ -36,7 +37,7 @@ final class CodexMcpE2ESpec extends AnyFunSuite:
   test("should list tools on real Codex MCP server"):
     assume(commandExists("codex"), "codex CLI is not installed")
 
-    val adapter = new CodexMcpClientAdapter(new CodexTransportFactory, new McpSessionCatalog)
+    val adapter = new McpSdkClientAdapter(McpProvider.Codex, new McpSdkTransportFactory, new McpSessionCatalog)
     val opened = adapter.openSession(codexConfig)
 
     opened match
@@ -64,7 +65,7 @@ final class CodexMcpE2ESpec extends AnyFunSuite:
       command = "codex-nonexistent-command-e2e",
       args = Seq("mcp-server")
     )
-    val adapter = new CodexMcpClientAdapter(new CodexTransportFactory, new McpSessionCatalog)
+    val adapter = new McpSdkClientAdapter(McpProvider.Codex, new McpSdkTransportFactory, new McpSessionCatalog)
     val result = adapter.openSession(badConfig)
 
     assert(result.isInstanceOf[McpResult.Failure])

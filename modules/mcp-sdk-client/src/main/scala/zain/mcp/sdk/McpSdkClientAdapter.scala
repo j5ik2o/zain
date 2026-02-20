@@ -1,4 +1,4 @@
-package zain.mcp.codex
+package zain.mcp.sdk
 
 import java.util.UUID
 
@@ -12,20 +12,20 @@ import zain.core.mcp.McpResult
 import zain.core.mcp.McpSessionCatalog
 import zain.core.mcp.McpSessionId
 import zain.core.mcp.McpToolInfo
-import zain.mcp.codex.CodexTransportFactory.CodexSessionHandle
 
-final class CodexMcpClientAdapter(
-    transportFactory: CodexTransportFactory,
+final class McpSdkClientAdapter(
+    provider: McpProvider,
+    transportFactory: McpSdkTransportFactory,
     sessionCatalog: McpSessionCatalog
 ) extends McpClient:
-  private var handles: Map[McpSessionId, CodexSessionHandle] = Map.empty
+  private var handles: Map[McpSessionId, McpSdkClientHandle] = Map.empty
 
   override def openSession(config: McpConnectionConfig): McpResult[McpSessionId] =
     transportFactory.create(config) match
       case Left(error) => McpResult.Failure(error)
       case Right(handle) =>
         val sessionId = McpSessionId(UUID.randomUUID().toString)
-        sessionCatalog.register(sessionId, McpProvider.Codex, config)
+        sessionCatalog.register(sessionId, provider, config)
         putHandle(sessionId, handle)
         McpResult.Success(sessionId)
 
@@ -66,7 +66,7 @@ final class CodexMcpClientAdapter(
                     McpResult.Success(())
 
   private def withOpenedSession[A](sessionId: McpSessionId)(
-      f: CodexSessionHandle => McpResult[A]
+      f: McpSdkClientHandle => McpResult[A]
   ): McpResult[A] =
     sessionCatalog.resolveOpened(sessionId) match
       case Left(error) => McpResult.Failure(error)
@@ -75,18 +75,14 @@ final class CodexMcpClientAdapter(
           case None         => McpResult.Failure(McpError.SessionNotFound)
           case Some(handle) => f(handle)
 
-  private def putHandle(sessionId: McpSessionId, handle: CodexSessionHandle): Unit =
+  private def putHandle(sessionId: McpSessionId, handle: McpSdkClientHandle): Unit =
     this.synchronized:
       handles = handles.updated(sessionId, handle)
 
-  private def getHandle(sessionId: McpSessionId): Option[CodexSessionHandle] =
+  private def getHandle(sessionId: McpSessionId): Option[McpSdkClientHandle] =
     this.synchronized:
       handles.get(sessionId)
 
   private def removeHandle(sessionId: McpSessionId): Unit =
     this.synchronized:
       handles = handles.removed(sessionId)
-
-object CodexMcpClientAdapter:
-  def standard(): CodexMcpClientAdapter =
-    new CodexMcpClientAdapter(new CodexTransportFactory, new McpSessionCatalog)

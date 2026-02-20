@@ -6,21 +6,23 @@ import zain.core.mcp.McpClient
 import zain.core.mcp.McpConnectionConfig
 import zain.core.mcp.McpContent
 import zain.core.mcp.McpError
+import zain.core.mcp.McpProvider
 import zain.core.mcp.McpSessionCatalog
 import zain.core.mcp.McpToolInfo
-import zain.mcp.codex.CodexMcpClientAdapter
-import zain.mcp.codex.CodexTransportFactory
+import zain.mcp.sdk.McpSdkClientAdapter
+import zain.mcp.sdk.McpSdkClientHandle
+import zain.mcp.sdk.McpSdkTransportFactory
 
 final class CodexMcpClientContractSuite extends McpClientContractSuite:
   override protected def createClient(): McpClient =
     val unavailable = unavailableConfig
-    val transportFactory = new CodexTransportFactory(config =>
+    val transportFactory = new McpSdkTransportFactory(config =>
       if config == unavailable then
         Left(McpError.ConnectionUnavailable)
       else
         Right(ContractCodexSessionHandle)
     )
-    new CodexMcpClientAdapter(transportFactory, new McpSessionCatalog)
+    new McpSdkClientAdapter(McpProvider.Codex, transportFactory, new McpSessionCatalog)
 
   override protected def availableConfig: McpConnectionConfig =
     McpConnectionConfig.StreamableHttp("http://localhost:3100")
@@ -28,7 +30,7 @@ final class CodexMcpClientContractSuite extends McpClientContractSuite:
   override protected def unavailableConfig: McpConnectionConfig =
     McpConnectionConfig.StreamableHttp("http://localhost:3199")
 
-private object ContractCodexSessionHandle extends CodexTransportFactory.CodexSessionHandle:
+private object ContractCodexSessionHandle extends McpSdkClientHandle:
   override def listTools(): Either[McpError.ConnectionUnavailable.type, Seq[McpToolInfo]] =
     Right(Seq(McpToolInfo("echo", Some("echo tool"))))
 

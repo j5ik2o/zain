@@ -1,4 +1,4 @@
-package zain.mcp.claude
+package zain.mcp.sdk
 
 import scala.jdk.CollectionConverters.*
 import scala.util.control.NonFatal
@@ -25,16 +25,16 @@ import zain.core.mcp.McpContent
 import zain.core.mcp.McpError
 import zain.core.mcp.McpToolInfo
 
-final class ClaudeCodeTransportFactory(
-    sessionOpener: McpConnectionConfig => Either[McpError.ConnectionUnavailable.type, ClaudeCodeClientHandle]
+final class McpSdkTransportFactory(
+    sessionOpener: McpConnectionConfig => Either[McpError.ConnectionUnavailable.type, McpSdkClientHandle]
 ):
-  def this() = this(ClaudeCodeTransportFactory.openWithSdk)
+  def this() = this(McpSdkTransportFactory.openWithSdk)
 
-  def create(config: McpConnectionConfig): Either[McpError.ConnectionUnavailable.type, ClaudeCodeClientHandle] =
+  def create(config: McpConnectionConfig): Either[McpError.ConnectionUnavailable.type, McpSdkClientHandle] =
     sessionOpener(config)
 
-object ClaudeCodeTransportFactory:
-  private final case class SdkClaudeCodeClientHandle(client: McpSyncClient) extends ClaudeCodeClientHandle:
+object McpSdkTransportFactory:
+  private final case class SdkMcpClientHandle(client: McpSyncClient) extends McpSdkClientHandle:
     override def listTools(): Either[McpError.ConnectionUnavailable.type, Seq[McpToolInfo]] =
       toConnectionUnavailable {
         val result = client.listTools()
@@ -115,14 +115,14 @@ object ClaudeCodeTransportFactory:
 
   def openWithSdk(
       config: McpConnectionConfig
-  ): Either[McpError.ConnectionUnavailable.type, ClaudeCodeClientHandle] =
+  ): Either[McpError.ConnectionUnavailable.type, McpSdkClientHandle] =
     toConnectionUnavailable {
       McpClient.sync(toSdkTransport(config)).build()
     } match
       case Left(error) => Left(error)
       case Right(client) =>
         toConnectionUnavailable(client.initialize()) match
-          case Right(_) => Right(SdkClaudeCodeClientHandle(client))
+          case Right(_) => Right(SdkMcpClientHandle(client))
           case Left(error) =>
             closeSilently(client)
             Left(error)

@@ -4,9 +4,11 @@ import scala.util.Try
 
 import org.scalatest.funsuite.AnyFunSuite
 import zain.core.mcp.McpConnectionConfig
+import zain.core.mcp.McpProvider
 import zain.core.mcp.McpResult
-import zain.mcp.claude.ClaudeCodeMcpClientAdapter
-import zain.mcp.claude.ClaudeCodeTransportFactory
+import zain.core.mcp.McpSessionCatalog
+import zain.mcp.sdk.McpSdkClientAdapter
+import zain.mcp.sdk.McpSdkTransportFactory
 
 final class ClaudeCodeMcpE2ESpec extends AnyFunSuite:
   private def commandExists(command: String): Boolean =
@@ -20,7 +22,7 @@ final class ClaudeCodeMcpE2ESpec extends AnyFunSuite:
   test("should open session to real Claude Code MCP server"):
     assume(commandExists("claude"), "claude CLI is not installed")
 
-    val adapter = new ClaudeCodeMcpClientAdapter(new ClaudeCodeTransportFactory)
+    val adapter = new McpSdkClientAdapter(McpProvider.ClaudeCode, new McpSdkTransportFactory, new McpSessionCatalog)
     val result = adapter.openSession(claudeConfig)
 
     result match
@@ -35,7 +37,7 @@ final class ClaudeCodeMcpE2ESpec extends AnyFunSuite:
   test("should list tools on real Claude Code MCP server"):
     assume(commandExists("claude"), "claude CLI is not installed")
 
-    val adapter = new ClaudeCodeMcpClientAdapter(new ClaudeCodeTransportFactory)
+    val adapter = new McpSdkClientAdapter(McpProvider.ClaudeCode, new McpSdkTransportFactory, new McpSessionCatalog)
     val opened = adapter.openSession(claudeConfig)
 
     opened match
@@ -63,7 +65,7 @@ final class ClaudeCodeMcpE2ESpec extends AnyFunSuite:
       command = "claude-nonexistent-command-e2e",
       args = Seq("mcp", "serve")
     )
-    val adapter = new ClaudeCodeMcpClientAdapter(new ClaudeCodeTransportFactory)
+    val adapter = new McpSdkClientAdapter(McpProvider.ClaudeCode, new McpSdkTransportFactory, new McpSessionCatalog)
     val result = adapter.openSession(badConfig)
 
     assert(result.isInstanceOf[McpResult.Failure])

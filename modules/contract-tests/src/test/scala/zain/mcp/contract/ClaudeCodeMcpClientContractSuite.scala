@@ -6,21 +6,23 @@ import zain.core.mcp.McpClient
 import zain.core.mcp.McpConnectionConfig
 import zain.core.mcp.McpContent
 import zain.core.mcp.McpError
+import zain.core.mcp.McpProvider
+import zain.core.mcp.McpSessionCatalog
 import zain.core.mcp.McpToolInfo
-import zain.mcp.claude.ClaudeCodeClientHandle
-import zain.mcp.claude.ClaudeCodeMcpClientAdapter
-import zain.mcp.claude.ClaudeCodeTransportFactory
+import zain.mcp.sdk.McpSdkClientAdapter
+import zain.mcp.sdk.McpSdkClientHandle
+import zain.mcp.sdk.McpSdkTransportFactory
 
 final class ClaudeCodeMcpClientContractSuite extends McpClientContractSuite:
   override protected def createClient(): McpClient =
     val unavailable = unavailableConfig
-    val factory = new ClaudeCodeTransportFactory(config =>
+    val transportFactory = new McpSdkTransportFactory(config =>
       if config == unavailable then
         Left(McpError.ConnectionUnavailable)
       else
-        Right(ContractClaudeCodeClientHandle)
+        Right(ContractClaudeCodeSessionHandle)
     )
-    new ClaudeCodeMcpClientAdapter(factory)
+    new McpSdkClientAdapter(McpProvider.ClaudeCode, transportFactory, new McpSessionCatalog)
 
   override protected def availableConfig: McpConnectionConfig =
     McpConnectionConfig.StreamableHttp("http://localhost:3000")
@@ -28,7 +30,7 @@ final class ClaudeCodeMcpClientContractSuite extends McpClientContractSuite:
   override protected def unavailableConfig: McpConnectionConfig =
     McpConnectionConfig.StreamableHttp("http://localhost:3099")
 
-private object ContractClaudeCodeClientHandle extends ClaudeCodeClientHandle:
+private object ContractClaudeCodeSessionHandle extends McpSdkClientHandle:
   override def listTools(): Either[McpError.ConnectionUnavailable.type, Seq[McpToolInfo]] =
     Right(Seq(McpToolInfo("echo", Some("echo tool"))))
 
