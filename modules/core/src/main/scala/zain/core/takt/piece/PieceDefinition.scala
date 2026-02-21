@@ -16,6 +16,9 @@ final case class PieceDefinition private (
   def movementNames: Set[MovementName] =
     movements.names
 
+  def movementByName(name: MovementName): Option[zain.core.takt.movement.MovementDefinition] =
+    movements.findByName(name)
+
 object PieceDefinition:
   private[piece] def create(
       name: PieceName,

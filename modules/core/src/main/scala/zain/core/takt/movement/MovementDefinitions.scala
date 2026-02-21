@@ -15,6 +15,9 @@ final case class MovementDefinitions private (
   def names: Set[MovementName] =
     values.map(_.name).toSet
 
+  def findByName(name: MovementName): Option[MovementDefinition] =
+    values.find(_.name == name)
+
   def parseNonEmpty: Either[PieceDefinitionError, MovementDefinitions] =
     if isEmpty then Left(PieceDefinitionError.EmptyMovements)
     else Right(this)

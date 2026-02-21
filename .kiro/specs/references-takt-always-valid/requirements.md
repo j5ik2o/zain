@@ -138,6 +138,7 @@
 - 11.1 評価順は `aggregate -> phase3 tag -> phase1 tag -> ai judge -> ai judge fallback` でなければならない。
 - 11.2 評価結果は「一致したrule index + 一致手法」を返さなければならない。
 - 11.3 例外で制御してはならず、失敗は `Either` で表現しなければならない。
+- 11.4 Rule評価結果の適用（`MovementOutput` への記録と次movementへの遷移）はドメイン集約内で一貫して実行されなければならない。
 
 ### 12. 実行モード構成情報
 

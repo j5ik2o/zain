@@ -75,6 +75,7 @@ flowchart LR
 | `MovementDefinition` | Domain | movement設定（実行モード・rule・facet参照）の整合性管理 | 3.1, 4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 4.7 |
 | `PieceDefinition` | Domain Aggregate | Piece全体の初期整合性保証 | 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7, 3.8 |
 | `PieceDefinitionFactory` | Domain Factory | 外部入力をAlways-ValidなPieceへ変換 | 3.x, 4.x, 6.1, 6.2, 6.3 |
+| `PieceExecution` | Domain Aggregate | ルール評価と状態遷移を統合し、1ステップ進行をドメイン計算として提供 | 5.1, 5.2, 5.3, 5.4, 5.5, 10.1, 10.2, 11.1, 11.2, 11.3 |
 | `PieceExecutionState` | Domain Aggregate | 実行状態と遷移の整合性保証 | 5.1, 5.2, 5.3, 5.4, 5.5, 7.3 |
 | `PieceDefinitionError` | Domain | Piece生成/構成失敗を識別可能な型へ固定化 | 6.2, 6.3 |
 | `PieceExecutionError` | Domain | 実行遷移失敗を識別可能な型へ固定化 | 5.5, 6.2 |
@@ -204,6 +205,18 @@ flowchart LR
   - `TransitionTarget.Movement(name)` は `allowedMovements` に存在しない場合拒否。
   - すべての更新操作は新インスタンスを返す。
 
+### `PieceExecution`
+- 責務: `PieceDefinition` と `PieceExecutionState` を束ね、ルール評価と遷移をドメイン計算として扱う。
+- 公開インターフェース:
+  - `start(definition: PieceDefinition): PieceExecution`
+  - `currentMovementDefinition: Either[PieceExecutionError, MovementDefinition]`
+  - `evaluateAndAdvance(agentContent: String, tagContent: String, interactive: Boolean, detectRuleIndex: RuleIndexDetector, aiConditionJudge: AiConditionJudge): Either[PieceExecutionError, PieceExecution]`
+- 契約:
+  - 現在movementが定義に存在しない場合は失敗する。
+  - ルール評価順は `RuleEvaluator` 契約（aggregate → phase3 → phase1 → ai judge → ai fallback）に従う。
+  - 一致した `matchedRuleIndex` を `MovementOutput` に保持してから遷移する。
+  - 更新は常に新しい `PieceExecution` を返す。
+
 ### `PieceDefinitionError`
 - 責務: Piece生成・構成時の失敗契約を型で固定化する。
 - 公開インターフェース:
@@ -238,6 +251,7 @@ flowchart LR
 | `MovementExecutionMode` | 値オブジェクト/ADT | `Sequential` / `Parallel` / `Arpeggio` / `TeamLeader` | 実行モードは常に単一 |
 | `MovementDefinition` | エンティティ | `name`, `rules`, `facets`, `executionMode` | top-levelは遷移先必須、facet参照は定義済みのみ |
 | `PieceDefinition` | 集約ルート | `name`, `movements`, `initialMovement`, `maxMovements` | movement非空・name一意・初期movement整合・遷移先整合 |
+| `PieceExecution` | 集約ルート | `definition`, `state` | ルール評価と遷移を一貫したドメイン計算として保持 |
 | `PieceExecutionState` | 集約ルート | `pieceName`, `currentMovement`, `iteration`, `status`, `allowedMovements` | `status` は `running/completed/aborted` |
 
 ### 論理データモデル
