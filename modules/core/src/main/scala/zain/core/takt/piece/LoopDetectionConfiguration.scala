@@ -1,36 +1,34 @@
 package zain.core.takt.piece
 
 final case class LoopDetectionConfiguration private (
-    maxConsecutiveSameStep: Int,
+    maxConsecutiveSameStep: LoopDetectionMaxConsecutiveSameStep,
     action: LoopDetectionAction
 )
 
 object LoopDetectionConfiguration:
   val Default: LoopDetectionConfiguration = LoopDetectionConfiguration(
-    maxConsecutiveSameStep = 10,
+    maxConsecutiveSameStep = LoopDetectionMaxConsecutiveSameStep
+      .parse(10)
+      .fold(_ => throw new IllegalStateException("invalid default loop detection threshold"), identity),
     action = LoopDetectionAction.Warn
   )
 
   def parse(
-      maxConsecutiveSameStep: Option[Int],
+      maxConsecutiveSameStep: Option[LoopDetectionMaxConsecutiveSameStep],
       action: Option[LoopDetectionAction]
   ): Either[PieceDefinitionError, LoopDetectionConfiguration] =
-    parseMaxConsecutiveSameStep(maxConsecutiveSameStep.getOrElse(Default.maxConsecutiveSameStep))
-      .map: parsedMaxConsecutiveSameStep =>
-        LoopDetectionConfiguration(
-          maxConsecutiveSameStep = parsedMaxConsecutiveSameStep,
-          action = action.getOrElse(Default.action)
-        )
+    Right(
+      LoopDetectionConfiguration(
+        maxConsecutiveSameStep = maxConsecutiveSameStep.getOrElse(Default.maxConsecutiveSameStep),
+        action = action.getOrElse(Default.action)
+      )
+    )
 
   def create(
-      maxConsecutiveSameStep: Option[Int],
+      maxConsecutiveSameStep: Option[LoopDetectionMaxConsecutiveSameStep],
       action: Option[LoopDetectionAction]
   ): Either[PieceDefinitionError, LoopDetectionConfiguration] =
     parse(
       maxConsecutiveSameStep = maxConsecutiveSameStep,
       action = action
     )
-
-  private def parseMaxConsecutiveSameStep(value: Int): Either[PieceDefinitionError, Int] =
-    if value <= 0 then Left(PieceDefinitionError.NonPositiveLoopDetectionMaxConsecutiveSameStep)
-    else Right(value)

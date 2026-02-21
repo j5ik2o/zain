@@ -2,8 +2,11 @@ package zain.core.takt.piece
 
 import zain.core.takt.primitives.IterationCount
 import zain.core.takt.primitives.MovementName
+import zain.core.takt.primitives.PersonaName
+import zain.core.takt.primitives.PersonaSessionId
 import zain.core.takt.primitives.PieceName
 import zain.core.takt.primitives.TransitionTarget
+import zain.core.takt.primitives.UserInput
 
 final case class PieceExecutionState private (
     pieceName: PieceName,
@@ -12,8 +15,8 @@ final case class PieceExecutionState private (
     iteration: IterationCount,
     movementOutputs: Map[MovementName, MovementOutput],
     lastOutput: Option[MovementOutput],
-    userInputs: Vector[String],
-    personaSessions: Map[String, String],
+    userInputs: Vector[UserInput],
+    personaSessions: Map[PersonaName, PersonaSessionId],
     movementIterations: Map[MovementName, IterationCount],
     status: PieceExecutionStatus
 ):
@@ -58,8 +61,8 @@ final case class PieceExecutionState private (
       lastOutput = Some(movementOutput)
     )
 
-  def appendUserInput(input: String): PieceExecutionState =
-    val truncated = input.take(PieceExecutionState.MaxUserInputLength)
+  def appendUserInput(input: UserInput): PieceExecutionState =
+    val truncated = input.truncate(PieceExecutionState.MaxUserInputLength)
     val nextInputs =
       if userInputs.size >= PieceExecutionState.MaxUserInputs then
         userInputs.tail :+ truncated
@@ -68,8 +71,8 @@ final case class PieceExecutionState private (
     copy(userInputs = nextInputs)
 
   def recordPersonaSession(
-      persona: String,
-      sessionId: String
+      persona: PersonaName,
+      sessionId: PersonaSessionId
   ): PieceExecutionState =
     copy(personaSessions = personaSessions.updated(persona, sessionId))
 

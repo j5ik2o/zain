@@ -10,9 +10,11 @@ import zain.core.takt.movement.MovementRule
 import zain.core.takt.movement.MovementRules
 import zain.core.takt.piece.evaluation.AiConditionJudge
 import zain.core.takt.piece.evaluation.RuleIndexDetector
-import zain.core.takt.piece.evaluation.RuleJudgeCondition
+import zain.core.takt.piece.evaluation.RuleJudgeConditions
+import zain.core.takt.primitives.AgentOutput
 import zain.core.takt.primitives.MovementName
 import zain.core.takt.primitives.PieceName
+import zain.core.takt.primitives.RuleDetectionContent
 
 final class PieceExecutionSpec extends AnyFunSuite:
   private val planMovementName = parseMovementName("plan")
@@ -30,8 +32,8 @@ final class PieceExecutionSpec extends AnyFunSuite:
     val execution = PieceExecution.start(piece)
 
     val actual = execution.evaluateAndAdvance(
-      agentContent = "done",
-      tagContent = "[PLAN:1]",
+      agentContent = parseAgentOutput("done"),
+      tagContent = parseRuleDetectionContent("[PLAN:1]"),
       interactive = false,
       detectRuleIndex = StaticRuleIndexDetector.fixed(Some(0)),
       aiConditionJudge = StaticAiConditionJudge.fixed(None)
@@ -47,8 +49,8 @@ final class PieceExecutionSpec extends AnyFunSuite:
     val execution = PieceExecution.start(piece)
 
     val actual = execution.evaluateAndAdvance(
-      agentContent = "",
-      tagContent = "",
+      agentContent = parseAgentOutput(""),
+      tagContent = parseRuleDetectionContent(""),
       interactive = false,
       detectRuleIndex = StaticRuleIndexDetector.fixed(None),
       aiConditionJudge = StaticAiConditionJudge.fixed(None)
@@ -97,10 +99,20 @@ final class PieceExecutionSpec extends AnyFunSuite:
       case Right(parsed) => parsed
       case Left(error)   => fail(s"rule parsing should succeed: $error")
 
+  private def parseAgentOutput(value: String): AgentOutput =
+    AgentOutput.parse(value) match
+      case Right(parsed) => parsed
+      case Left(error)   => fail(s"agent output parsing should succeed: $error")
+
+  private def parseRuleDetectionContent(value: String): RuleDetectionContent =
+    RuleDetectionContent.parse(value) match
+      case Right(parsed) => parsed
+      case Left(error)   => fail(s"rule detection content parsing should succeed: $error")
+
   private final class StaticRuleIndexDetector(
       fixedValue: Option[Int]
   ) extends RuleIndexDetector:
-    override def detect(content: String, movementName: MovementName): Option[Int] =
+    override def detect(content: RuleDetectionContent, movementName: MovementName): Option[Int] =
       fixedValue
 
   private object StaticRuleIndexDetector:
@@ -111,8 +123,8 @@ final class PieceExecutionSpec extends AnyFunSuite:
       fixedValue: Option[Int]
   ) extends AiConditionJudge:
     override def judge(
-        agentOutput: String,
-        conditions: Vector[RuleJudgeCondition]
+        agentOutput: AgentOutput,
+        conditions: RuleJudgeConditions
     ): Either[PieceExecutionError, Option[Int]] =
       Right(fixedValue)
 

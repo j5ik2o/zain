@@ -12,9 +12,6 @@ final class LoopDetectionConfigurationSpec extends AnyFunSuite:
     assert(actual == Right(LoopDetectionConfiguration.Default))
 
   test("should reject non positive max consecutive same step"):
-    val actual = LoopDetectionConfiguration.create(
-      maxConsecutiveSameStep = Some(0),
-      action = Some(LoopDetectionAction.Warn)
-    )
+    val actual = LoopDetectionMaxConsecutiveSameStep.parse(0)
 
     assert(actual == Left(PieceDefinitionError.NonPositiveLoopDetectionMaxConsecutiveSameStep))

@@ -6,6 +6,8 @@ import zain.core.takt.piece.evaluation.RuleEvaluator
 import zain.core.takt.piece.evaluation.RuleEvaluatorContext
 import zain.core.takt.piece.evaluation.RuleIndexDetector
 import zain.core.takt.piece.evaluation.RuleMatch
+import zain.core.takt.primitives.AgentOutput
+import zain.core.takt.primitives.RuleDetectionContent
 
 final case class PieceExecution private (
     definition: PieceDefinition,
@@ -17,8 +19,8 @@ final case class PieceExecution private (
       .toRight(PieceExecutionError.CurrentMovementNotFound(state.currentMovement))
 
   def evaluateAndAdvance(
-      agentContent: String,
-      tagContent: String,
+      agentContent: AgentOutput,
+      tagContent: RuleDetectionContent,
       interactive: Boolean,
       detectRuleIndex: RuleIndexDetector,
       aiConditionJudge: AiConditionJudge
@@ -34,7 +36,7 @@ final case class PieceExecution private (
         aiConditionJudge = aiConditionJudge
       )
       movementOutput <- MovementOutput.create(
-        content = agentContent,
+        content = agentContent.value,
         matchedRuleIndex = Some(matched.index)
       )
       transitioned <- state
@@ -44,8 +46,8 @@ final case class PieceExecution private (
 
   private def evaluateRuleMatch(
       movement: MovementDefinition,
-      agentContent: String,
-      tagContent: String,
+      agentContent: AgentOutput,
+      tagContent: RuleDetectionContent,
       interactive: Boolean,
       detectRuleIndex: RuleIndexDetector,
       aiConditionJudge: AiConditionJudge

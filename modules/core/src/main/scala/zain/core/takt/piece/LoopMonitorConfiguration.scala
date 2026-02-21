@@ -1,31 +1,30 @@
 package zain.core.takt.piece
 
-import zain.core.takt.primitives.MovementName
+import zain.core.takt.primitives.MovementNames
 
 final case class LoopMonitorConfiguration private (
-    cycle: Vector[MovementName],
-    threshold: Int,
+    cycle: MovementNames,
+    threshold: LoopMonitorThreshold,
     judge: LoopMonitorJudge
 )
 
 object LoopMonitorConfiguration:
   def parse(
-      cycle: Vector[MovementName],
-      threshold: Int,
+      cycle: MovementNames,
+      threshold: LoopMonitorThreshold,
       judge: LoopMonitorJudge
   ): Either[PieceDefinitionError, LoopMonitorConfiguration] =
     for
       parsedCycle <- parseCycle(cycle)
-      parsedThreshold <- parseThreshold(threshold)
     yield LoopMonitorConfiguration(
       cycle = parsedCycle,
-      threshold = parsedThreshold,
+      threshold = threshold,
       judge = judge
     )
 
   def create(
-      cycle: Vector[MovementName],
-      threshold: Int,
+      cycle: MovementNames,
+      threshold: LoopMonitorThreshold,
       judge: LoopMonitorJudge
   ): Either[PieceDefinitionError, LoopMonitorConfiguration] =
     parse(
@@ -35,12 +34,8 @@ object LoopMonitorConfiguration:
     )
 
   private def parseCycle(
-      cycle: Vector[MovementName]
-  ): Either[PieceDefinitionError, Vector[MovementName]] =
+      cycle: MovementNames
+  ): Either[PieceDefinitionError, MovementNames] =
     if cycle.isEmpty then Left(PieceDefinitionError.EmptyLoopMonitorCycle)
     else if cycle.size < 2 then Left(PieceDefinitionError.LoopMonitorCycleRequiresAtLeastTwoMovements)
     else Right(cycle)
-
-  private def parseThreshold(value: Int): Either[PieceDefinitionError, Int] =
-    if value <= 0 then Left(PieceDefinitionError.NonPositiveLoopMonitorThreshold)
-    else Right(value)

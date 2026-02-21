@@ -10,8 +10,11 @@ import zain.core.takt.movement.MovementRule
 import zain.core.takt.movement.MovementRules
 import zain.core.takt.piece.MovementOutput
 import zain.core.takt.primitives.MovementName
+import zain.core.takt.primitives.PersonaName
+import zain.core.takt.primitives.PersonaSessionId
 import zain.core.takt.primitives.PieceName
 import zain.core.takt.primitives.TransitionTarget
+import zain.core.takt.primitives.UserInput
 
 final class PieceExecutionStateSpec extends AnyFunSuite:
   private val planMovementName = parseMovementName("plan")
@@ -129,38 +132,40 @@ final class PieceExecutionStateSpec extends AnyFunSuite:
   test("should append user input immutably"):
     val started = PieceExecutionState.start(pieceDefinition)
 
-    val actual = started.appendUserInput("input")
+    val actual = started.appendUserInput(parseUserInput("input"))
 
-    assert(actual.userInputs == Vector("input"))
+    assert(actual.userInputs.map(_.value) == Vector("input"))
     assert(started.userInputs.isEmpty)
     assert(started ne actual)
 
   test("should keep at most 100 user inputs and evict oldest one"):
     val started = PieceExecutionState.start(pieceDefinition)
     val filled = (1 to 100).foldLeft(started) { (acc, index) =>
-      acc.appendUserInput(s"input-$index")
+      acc.appendUserInput(parseUserInput(s"input-$index"))
     }
 
-    val actual = filled.appendUserInput("overflow")
+    val actual = filled.appendUserInput(parseUserInput("overflow"))
 
     assert(actual.userInputs.size == 100)
-    assert(actual.userInputs.headOption.contains("input-2"))
-    assert(actual.userInputs.lastOption.contains("overflow"))
+    assert(actual.userInputs.headOption.exists(_.value == "input-2"))
+    assert(actual.userInputs.lastOption.exists(_.value == "overflow"))
 
   test("should truncate user input to 10000 characters"):
     val started = PieceExecutionState.start(pieceDefinition)
     val longInput = "x" * 10050
 
-    val actual = started.appendUserInput(longInput)
+    val actual = started.appendUserInput(parseUserInput(longInput))
 
-    assert(actual.userInputs.headOption.exists(_.length == 10000))
+    assert(actual.userInputs.headOption.exists(_.value.length == 10000))
 
   test("should record persona session immutably"):
     val started = PieceExecutionState.start(pieceDefinition)
+    val personaName = parsePersonaName("reviewer")
+    val sessionId = parsePersonaSessionId("session-1")
 
-    val actual = started.recordPersonaSession("reviewer", "session-1")
+    val actual = started.recordPersonaSession(personaName, sessionId)
 
-    assert(actual.personaSessions.get("reviewer").contains("session-1"))
+    assert(actual.personaSessions.get(personaName).contains(sessionId))
     assert(started.personaSessions.isEmpty)
     assert(started ne actual)
 
@@ -255,6 +260,21 @@ final class PieceExecutionStateSpec extends AnyFunSuite:
     ) match
       case Right(parsed) => parsed
       case Left(error)   => fail(s"movement output parsing should succeed: $error")
+
+  private def parseUserInput(value: String): UserInput =
+    UserInput.parse(value) match
+      case Right(parsed) => parsed
+      case Left(error)   => fail(s"user input parsing should succeed: $error")
+
+  private def parsePersonaName(value: String): PersonaName =
+    PersonaName.parse(value) match
+      case Right(parsed) => parsed
+      case Left(error)   => fail(s"persona name parsing should succeed: $error")
+
+  private def parsePersonaSessionId(value: String): PersonaSessionId =
+    PersonaSessionId.parse(value) match
+      case Right(parsed) => parsed
+      case Left(error)   => fail(s"persona session id parsing should succeed: $error")
 
   private def movementByName(pieceDefinition: PieceDefinition, movementName: MovementName): MovementDefinition =
     pieceDefinition.movements.breachEncapsulationOfValues.find(_.name == movementName) match

@@ -9,6 +9,7 @@ import zain.core.takt.movement.MovementFacets
 import zain.core.takt.movement.MovementRule
 import zain.core.takt.movement.MovementRules
 import zain.core.takt.primitives.MovementName
+import zain.core.takt.primitives.MovementNames
 import zain.core.takt.primitives.PieceName
 
 final class PieceDefinitionFactorySpec extends AnyFunSuite:
@@ -217,12 +218,17 @@ final class PieceDefinitionFactorySpec extends AnyFunSuite:
       rules: Vector[LoopMonitorRule]
   ): LoopMonitorConfiguration =
     LoopMonitorConfiguration.create(
-      cycle = cycle,
-      threshold = threshold,
+      cycle = MovementNames.create(cycle),
+      threshold = parseLoopMonitorThreshold(threshold),
       judge = parseLoopMonitorJudge(rules)
     ) match
       case Right(parsed) => parsed
       case Left(error)   => fail(s"loop monitor configuration should succeed: $error")
+
+  private def parseLoopMonitorThreshold(value: Int): LoopMonitorThreshold =
+    LoopMonitorThreshold.parse(value) match
+      case Right(parsed) => parsed
+      case Left(error)   => fail(s"loop monitor threshold should succeed: $error")
 
   private def parseLoopMonitorJudge(rules: Vector[LoopMonitorRule]): LoopMonitorJudge =
     val parsedRules = LoopMonitorRules.create(rules) match

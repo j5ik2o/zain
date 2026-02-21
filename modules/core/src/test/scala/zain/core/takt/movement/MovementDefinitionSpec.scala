@@ -150,8 +150,8 @@ final class MovementDefinitionSpec extends AnyFunSuite:
 
   test("should keep arpeggio configuration when execution mode is arpeggio"):
     val arpeggioConfiguration = ArpeggioConfiguration.create(
-      batchSize = 2,
-      concurrency = 3
+      batchSize = parseArpeggioBatchSize(2),
+      concurrency = parseArpeggioConcurrency(3)
     ) match
       case Right(parsed) => parsed
       case Left(error)   => fail(s"arpeggio configuration should succeed: $error")
@@ -357,7 +357,7 @@ final class MovementDefinitionSpec extends AnyFunSuite:
       outputContractItems = outputContractItemsOf(outputContract)
     )
 
-    assert(actual.exists(_.outputContractItems.breachEncapsulationOfValues.map(_.name) == Vector("00-plan.md")))
+    assert(actual.exists(_.outputContractItems.breachEncapsulationOfValues.map(_.name.value) == Vector("00-plan.md")))
 
   test("should create movement when all facet references are defined"):
     val persona = parseFacetName("persona")
@@ -400,8 +400,8 @@ final class MovementDefinitionSpec extends AnyFunSuite:
 
   private def parseOutputContractItem(name: String, format: String): OutputContractItem =
     OutputContractItem.create(
-      name = name,
-      format = format,
+      name = parseOutputContractName(name),
+      format = parseOutputContractFormat(format),
       useJudge = None,
       order = None
     ) match
@@ -430,3 +430,23 @@ final class MovementDefinitionSpec extends AnyFunSuite:
     MovementRule.create(condition, next) match
       case Right(parsed) => parsed
       case Left(error)   => fail(s"rule parsing should succeed: $error")
+
+  private def parseOutputContractName(value: String): OutputContractName =
+    OutputContractName.parse(value) match
+      case Right(parsed) => parsed
+      case Left(error)   => fail(s"output contract name parsing should succeed: $error")
+
+  private def parseOutputContractFormat(value: String): OutputContractFormat =
+    OutputContractFormat.parse(value) match
+      case Right(parsed) => parsed
+      case Left(error)   => fail(s"output contract format parsing should succeed: $error")
+
+  private def parseArpeggioBatchSize(value: Int): ArpeggioBatchSize =
+    ArpeggioBatchSize.parse(value) match
+      case Right(parsed) => parsed
+      case Left(error)   => fail(s"arpeggio batch size parsing should succeed: $error")
+
+  private def parseArpeggioConcurrency(value: Int): ArpeggioConcurrency =
+    ArpeggioConcurrency.parse(value) match
+      case Right(parsed) => parsed
+      case Left(error)   => fail(s"arpeggio concurrency parsing should succeed: $error")

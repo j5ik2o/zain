@@ -7,7 +7,7 @@ import zain.core.takt.primitives.TransitionTarget
 final case class MovementRule private (
     condition: RuleCondition,
     next: Option[TransitionTarget],
-    appendix: Option[String],
+    appendix: Option[RuleAppendix],
     requiresUserInput: Boolean,
     interactiveOnly: Boolean
 )
@@ -34,7 +34,7 @@ object MovementRule:
   def create(
       condition: String,
       next: Option[String],
-      appendix: Option[String],
+      appendix: Option[RuleAppendix],
       requiresUserInput: Boolean,
       interactiveOnly: Boolean
   ): Either[PieceDefinitionError, MovementRule] =
@@ -49,18 +49,17 @@ object MovementRule:
   def parse(
       condition: String,
       next: Option[String],
-      appendix: Option[String],
+      appendix: Option[RuleAppendix],
       requiresUserInput: Boolean,
       interactiveOnly: Boolean
   ): Either[PieceDefinitionError, MovementRule] =
     for
       parsedCondition <- parseCondition(condition)
       parsedNext <- parseNext(next)
-      parsedAppendix <- parseAppendix(appendix)
     yield MovementRule(
       condition = parsedCondition,
       next = parsedNext,
-      appendix = parsedAppendix,
+      appendix = appendix,
       requiresUserInput = requiresUserInput,
       interactiveOnly = interactiveOnly
     )
@@ -74,15 +73,6 @@ object MovementRule:
           PieceDefinitionError.EmptyRuleCondition
         case _ =>
           PieceDefinitionError.InvalidRuleCondition
-
-  private def parseAppendix(
-      appendix: Option[String]
-  ): Either[PieceDefinitionError, Option[String]] =
-    appendix match
-      case None => Right(None)
-      case Some(value) =>
-        if value.isEmpty then Left(PieceDefinitionError.EmptyRuleAppendix)
-        else Right(Some(value))
 
   private def parseNext(next: Option[String]): Either[PieceDefinitionError, Option[TransitionTarget]] =
     next match

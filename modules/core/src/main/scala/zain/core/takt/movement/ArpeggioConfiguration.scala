@@ -1,43 +1,32 @@
 package zain.core.takt.movement
 
-import zain.core.takt.piece.PieceDefinitionError
-
 final case class ArpeggioConfiguration private (
-    batchSize: Int,
-    concurrency: Int
+    batchSize: ArpeggioBatchSize,
+    concurrency: ArpeggioConcurrency
 )
 
 object ArpeggioConfiguration:
   val Default: ArpeggioConfiguration = ArpeggioConfiguration(
-    batchSize = 1,
-    concurrency = 1
+    batchSize = ArpeggioBatchSize.parse(1).fold(_ => throw new IllegalStateException("invalid default batch size"), identity),
+    concurrency = ArpeggioConcurrency.parse(1).fold(_ => throw new IllegalStateException("invalid default concurrency"), identity)
   )
 
   def parse(
-      batchSize: Int,
-      concurrency: Int
-  ): Either[PieceDefinitionError, ArpeggioConfiguration] =
-    for
-      parsedBatchSize <- parseBatchSize(batchSize)
-      parsedConcurrency <- parseConcurrency(concurrency)
-    yield ArpeggioConfiguration(
-      batchSize = parsedBatchSize,
-      concurrency = parsedConcurrency
+      batchSize: ArpeggioBatchSize,
+      concurrency: ArpeggioConcurrency
+  ): Either[zain.core.takt.piece.PieceDefinitionError, ArpeggioConfiguration] =
+    Right(
+      ArpeggioConfiguration(
+        batchSize = batchSize,
+        concurrency = concurrency
+      )
     )
 
   def create(
-      batchSize: Int,
-      concurrency: Int
-  ): Either[PieceDefinitionError, ArpeggioConfiguration] =
+      batchSize: ArpeggioBatchSize,
+      concurrency: ArpeggioConcurrency
+  ): Either[zain.core.takt.piece.PieceDefinitionError, ArpeggioConfiguration] =
     parse(
       batchSize = batchSize,
       concurrency = concurrency
     )
-
-  private def parseBatchSize(value: Int): Either[PieceDefinitionError, Int] =
-    if value <= 0 then Left(PieceDefinitionError.NonPositiveArpeggioBatchSize)
-    else Right(value)
-
-  private def parseConcurrency(value: Int): Either[PieceDefinitionError, Int] =
-    if value <= 0 then Left(PieceDefinitionError.NonPositiveArpeggioConcurrency)
-    else Right(value)

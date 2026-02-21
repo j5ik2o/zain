@@ -30,9 +30,9 @@ object OutputContractItems:
       values: Vector[OutputContractItem]
   ): Either[PieceDefinitionError, Unit] =
     values
-      .foldLeft[Either[PieceDefinitionError, Set[String]]](Right(Set.empty)) { (acc, item) =>
+      .foldLeft[Either[PieceDefinitionError, Set[OutputContractName]]](Right(Set.empty)) { (acc, item) =>
         acc.flatMap: seen =>
-          if seen.contains(item.name) then Left(PieceDefinitionError.DuplicateOutputContractItemName(item.name))
+          if seen.contains(item.name) then Left(PieceDefinitionError.DuplicateOutputContractItemName(item.name.value))
           else Right(seen + item.name)
       }
       .map(_ => ())

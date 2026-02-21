@@ -11,3 +11,5 @@ enum PieceExecutionError:
   case RuleWithoutTransitionTarget(index: Int)
   case RuleNotMatched(movement: MovementName)
   case NegativeMatchedRuleIndex(index: Int)
+  case NegativeRuleJudgeConditionIndex(index: Int)
+  case EmptyRuleJudgeConditionText

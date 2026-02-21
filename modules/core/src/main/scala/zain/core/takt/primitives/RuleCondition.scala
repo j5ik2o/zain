@@ -1,21 +1,21 @@
 package zain.core.takt.primitives
 
 enum RuleCondition:
-  case Plain(text: String)
-  case Ai(text: String)
+  case Plain(text: RuleConditionText)
+  case Ai(text: RuleConditionText)
   case Aggregate(
       aggregateType: RuleCondition.AggregateType,
-      conditions: Vector[String]
+      conditions: RuleConditionTexts
   )
 
   def breachEncapsulationOfRawValue: String =
     this match
       case RuleCondition.Plain(text) =>
-        text
+        text.value
       case RuleCondition.Ai(text) =>
-        s"""ai("$text")"""
+        s"""ai("${text.value}")"""
       case RuleCondition.Aggregate(aggregateType, conditions) =>
-        val serializedConditions = conditions.map(value => s""""$value"""").mkString(", ")
+        val serializedConditions = conditions.map(value => s""""${value.value}"""").mkString(", ")
         aggregateType.keyword + s"($serializedConditions)"
 
   def isAiCondition: Boolean =
@@ -25,13 +25,13 @@ enum RuleCondition:
 
   def aiConditionText: Option[String] =
     this match
-      case RuleCondition.Ai(text) => Some(text)
+      case RuleCondition.Ai(text) => Some(text.value)
       case _                      => None
 
   def aggregateCondition: Option[(RuleCondition.AggregateType, Vector[String])] =
     this match
       case RuleCondition.Aggregate(aggregateType, conditions) =>
-        Some((aggregateType, conditions))
+        Some((aggregateType, conditions.map(_.value)))
       case _ =>
         None
 
@@ -49,14 +49,14 @@ object RuleCondition:
     else
       value match
         case AiRegex(aiText) =>
-          Right(RuleCondition.Ai(aiText))
+          RuleConditionText.parse(aiText).map(RuleCondition.Ai.apply)
         case AggregateRegex(aggregateTypeText, aggregateArgs) =>
           parseAggregateCondition(
             aggregateTypeText = aggregateTypeText,
             aggregateArgs = aggregateArgs
           )
         case _ =>
-          Right(RuleCondition.Plain(value))
+          RuleConditionText.parse(value).map(RuleCondition.Plain.apply)
 
   private def parseAggregateCondition(
       aggregateTypeText: String,
@@ -81,8 +81,18 @@ object RuleCondition:
 
   private def parseAggregateConditions(
       value: String
-  ): Either[TaktPrimitiveError, Vector[String]] =
-    val parsed = QuotedConditionRegex.findAllMatchIn(value).map(_.group(1)).toVector
-
-    if parsed.isEmpty then Left(TaktPrimitiveError.InvalidRuleConditionSyntax)
-    else Right(parsed)
+  ): Either[TaktPrimitiveError, RuleConditionTexts] =
+    QuotedConditionRegex
+      .findAllMatchIn(value)
+      .map(_.group(1))
+      .toVector
+      .foldLeft[Either[TaktPrimitiveError, Vector[RuleConditionText]]](Right(Vector.empty)) {
+        case (acc, currentText) =>
+          for
+            parsedTexts <- acc
+            parsedText <- RuleConditionText.parse(currentText)
+          yield parsedTexts :+ parsedText
+      }
+      .flatMap: parsedTexts =>
+        if parsedTexts.isEmpty then Left(TaktPrimitiveError.InvalidRuleConditionSyntax)
+        else Right(RuleConditionTexts.create(parsedTexts))

@@ -24,13 +24,13 @@ final class ReferenceModelInventorySpec extends AnyFunSuite:
   test("should reject target registration when source references are empty"):
     val actual = ReferenceModelInventory.Empty.registerTarget(
       target = ReferenceModelTarget.PieceDefinition,
-      sourcePaths = Vector.empty
+      sourcePaths = ReferenceSourcePaths.Empty
     )
 
     assert(actual == Left(ReferenceModelInventoryError.MissingReferenceSources(ReferenceModelTarget.PieceDefinition)))
 
   test("should reject target registration when source reference path is empty"):
-    val actual = ReferenceModelInventory.Empty.registerTarget(
+    val actual = ReferenceModelInventory.parseSourcePaths(
       target = ReferenceModelTarget.OutputContract,
       sourcePaths = Vector("")
     )
@@ -38,22 +38,44 @@ final class ReferenceModelInventorySpec extends AnyFunSuite:
     assert(actual == Left(ReferenceModelInventoryError.EmptyReferenceSourcePath(ReferenceModelTarget.OutputContract)))
 
   test("should require exclusion reason for non migration target"):
-    val actual = ReferenceModelInventory.Empty.registerExclusion(
-      excludedName = "legacy-type",
-      reason = ""
+    val excludedName = parseExcludedName("legacy-type")
+    val actual = ExclusionReason.create(
+      excludedName = excludedName,
+      value = ""
     )
 
-    assert(actual == Left(ReferenceModelInventoryError.MissingExclusionReason("legacy-type")))
+    assert(actual == Left(ReferenceModelInventoryError.MissingExclusionReason(excludedName)))
 
   test("should register exclusion when exclusion reason is provided"):
+    val excludedName = parseExcludedName("legacy-type")
+    val exclusionReason = parseExclusionReason(
+      excludedName = excludedName,
+      value = "external provider type"
+    )
     val actual = ReferenceModelInventory.Empty.registerExclusion(
-      excludedName = "legacy-type",
-      reason = "external provider type"
+      excludedName = excludedName,
+      reason = exclusionReason
     )
 
     assert(actual.isRight)
     val inventory = actual match
       case Right(value) => value
       case Left(_)      => fail("exclusion registration should succeed")
-    val exclusionReason = inventory.exclusionOf("legacy-type")
-    assert(exclusionReason.exists(_.value == "external provider type"))
+    val reason = inventory.exclusionOf(excludedName)
+    assert(reason.exists(_.value == "external provider type"))
+
+  private def parseExcludedName(value: String): ExcludedName =
+    ExcludedName.parse(value) match
+      case Right(parsed) => parsed
+      case Left(error)   => fail(s"excluded name parsing should succeed: $error")
+
+  private def parseExclusionReason(
+      excludedName: ExcludedName,
+      value: String
+  ): ExclusionReason =
+    ExclusionReason.create(
+      excludedName = excludedName,
+      value = value
+    ) match
+      case Right(parsed) => parsed
+      case Left(error)   => fail(s"exclusion reason parsing should succeed: $error")

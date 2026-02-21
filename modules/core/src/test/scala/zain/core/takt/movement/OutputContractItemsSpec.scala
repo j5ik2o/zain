@@ -6,8 +6,8 @@ import zain.core.takt.piece.PieceDefinitionError
 final class OutputContractItemsSpec extends AnyFunSuite:
   test("should create output contract item with default useJudge"):
     val actual = OutputContractItem.create(
-      name = "00-plan.md",
-      format = "plan",
+      name = parseOutputContractName("00-plan.md"),
+      format = parseOutputContractFormat("plan"),
       useJudge = None,
       order = None
     )
@@ -15,32 +15,17 @@ final class OutputContractItemsSpec extends AnyFunSuite:
     assert(actual.exists(_.useJudge))
 
   test("should reject output contract item with empty name"):
-    val actual = OutputContractItem.create(
-      name = "",
-      format = "plan",
-      useJudge = None,
-      order = None
-    )
+    val actual = OutputContractName.parse("")
 
     assert(actual == Left(PieceDefinitionError.EmptyOutputContractName))
 
   test("should reject output contract item with empty format"):
-    val actual = OutputContractItem.create(
-      name = "00-plan.md",
-      format = "",
-      useJudge = None,
-      order = None
-    )
+    val actual = OutputContractFormat.parse("")
 
     assert(actual == Left(PieceDefinitionError.EmptyOutputContractFormat))
 
   test("should reject output contract item with empty order"):
-    val actual = OutputContractItem.create(
-      name = "00-plan.md",
-      format = "plan",
-      useJudge = None,
-      order = Some("")
-    )
+    val actual = OutputContractOrder.parse("")
 
     assert(actual == Left(PieceDefinitionError.EmptyOutputContractOrder))
 
@@ -54,10 +39,20 @@ final class OutputContractItemsSpec extends AnyFunSuite:
 
   private def parseOutputContractItem(name: String): OutputContractItem =
     OutputContractItem.create(
-      name = name,
-      format = "plan",
+      name = parseOutputContractName(name),
+      format = parseOutputContractFormat("plan"),
       useJudge = Some(true),
       order = None
     ) match
       case Right(parsed) => parsed
       case Left(error)   => fail(s"output contract item parsing should succeed: $error")
+
+  private def parseOutputContractName(value: String): OutputContractName =
+    OutputContractName.parse(value) match
+      case Right(parsed) => parsed
+      case Left(error)   => fail(s"output contract name parsing should succeed: $error")
+
+  private def parseOutputContractFormat(value: String): OutputContractFormat =
+    OutputContractFormat.parse(value) match
+      case Right(parsed) => parsed
+      case Left(error)   => fail(s"output contract format parsing should succeed: $error")

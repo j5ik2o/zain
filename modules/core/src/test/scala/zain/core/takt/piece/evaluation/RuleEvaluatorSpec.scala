@@ -14,8 +14,11 @@ import zain.core.takt.piece.PieceDefinitionFactory
 import zain.core.takt.piece.PieceDraft
 import zain.core.takt.piece.PieceExecutionError
 import zain.core.takt.piece.PieceExecutionState
+import zain.core.takt.piece.evaluation.RuleJudgeConditions
+import zain.core.takt.primitives.AgentOutput
 import zain.core.takt.primitives.MovementName
 import zain.core.takt.primitives.PieceName
+import zain.core.takt.primitives.RuleDetectionContent
 
 final class RuleEvaluatorSpec extends AnyFunSuite:
 
@@ -66,7 +69,10 @@ final class RuleEvaluatorSpec extends AnyFunSuite:
       )
     )
 
-    val actual = evaluator.evaluate(agentContent = "ignored", tagContent = "[REVIEW:2]")
+    val actual = evaluator.evaluate(
+      agentContent = parseAgentOutput("ignored"),
+      tagContent = parseRuleDetectionContent("[REVIEW:2]")
+    )
 
     assert(actual == Right(Some(RuleMatch(index = 0, method = RuleMatchMethod.Aggregate))))
 
@@ -86,13 +92,16 @@ final class RuleEvaluatorSpec extends AnyFunSuite:
         state = createState(movement),
         interactive = false,
         detectRuleIndex = new RuleIndexDetector:
-          override def detect(content: String, movementName: MovementName): Option[Int] =
-            if content == "phase3" then Some(1) else Some(0),
+          override def detect(content: RuleDetectionContent, movementName: MovementName): Option[Int] =
+            if content.value == "phase3" then Some(1) else Some(0),
         aiConditionJudge = StaticAiConditionJudge.fixed(None)
       )
     )
 
-    val actual = evaluator.evaluate(agentContent = "phase1", tagContent = "phase3")
+    val actual = evaluator.evaluate(
+      agentContent = parseAgentOutput("phase1"),
+      tagContent = parseRuleDetectionContent("phase3")
+    )
 
     assert(actual == Right(Some(RuleMatch(index = 1, method = RuleMatchMethod.Phase3Tag))))
 
@@ -112,13 +121,16 @@ final class RuleEvaluatorSpec extends AnyFunSuite:
         state = createState(movement),
         interactive = false,
         detectRuleIndex = new RuleIndexDetector:
-          override def detect(content: String, movementName: MovementName): Option[Int] =
-            if content == "phase3" then None else Some(0),
+          override def detect(content: RuleDetectionContent, movementName: MovementName): Option[Int] =
+            if content.value == "phase3" then None else Some(0),
         aiConditionJudge = StaticAiConditionJudge.fixed(None)
       )
     )
 
-    val actual = evaluator.evaluate(agentContent = "phase1", tagContent = "phase3")
+    val actual = evaluator.evaluate(
+      agentContent = parseAgentOutput("phase1"),
+      tagContent = parseRuleDetectionContent("phase3")
+    )
 
     assert(actual == Right(Some(RuleMatch(index = 0, method = RuleMatchMethod.Phase1Tag))))
 
@@ -142,7 +154,10 @@ final class RuleEvaluatorSpec extends AnyFunSuite:
       )
     )
 
-    val actual = evaluator.evaluate(agentContent = "agent output", tagContent = "")
+    val actual = evaluator.evaluate(
+      agentContent = parseAgentOutput("agent output"),
+      tagContent = parseRuleDetectionContent("")
+    )
 
     assert(actual == Right(Some(RuleMatch(index = 1, method = RuleMatchMethod.AiJudge))))
 
@@ -166,7 +181,10 @@ final class RuleEvaluatorSpec extends AnyFunSuite:
       )
     )
 
-    val actual = evaluator.evaluate(agentContent = "agent output", tagContent = "")
+    val actual = evaluator.evaluate(
+      agentContent = parseAgentOutput("agent output"),
+      tagContent = parseRuleDetectionContent("")
+    )
 
     assert(actual == Right(Some(RuleMatch(index = 0, method = RuleMatchMethod.AiJudgeFallback))))
 
@@ -190,7 +208,10 @@ final class RuleEvaluatorSpec extends AnyFunSuite:
       )
     )
 
-    val actual = evaluator.evaluate(agentContent = "agent output", tagContent = "phase3")
+    val actual = evaluator.evaluate(
+      agentContent = parseAgentOutput("agent output"),
+      tagContent = parseRuleDetectionContent("phase3")
+    )
 
     assert(actual == Right(Some(RuleMatch(index = 1, method = RuleMatchMethod.AiJudgeFallback))))
 
@@ -214,7 +235,10 @@ final class RuleEvaluatorSpec extends AnyFunSuite:
       )
     )
 
-    val actual = evaluator.evaluate(agentContent = "", tagContent = "")
+    val actual = evaluator.evaluate(
+      agentContent = parseAgentOutput(""),
+      tagContent = parseRuleDetectionContent("")
+    )
 
     assert(actual == Left(PieceExecutionError.RuleNotMatched(movement.name)))
 
@@ -238,7 +262,10 @@ final class RuleEvaluatorSpec extends AnyFunSuite:
       )
     )
 
-    val actual = evaluator.evaluate(agentContent = "agent output", tagContent = "")
+    val actual = evaluator.evaluate(
+      agentContent = parseAgentOutput("agent output"),
+      tagContent = parseRuleDetectionContent("")
+    )
 
     assert(actual == Left(PieceExecutionError.RuleNotMatched(movement.name)))
 
@@ -296,6 +323,16 @@ final class RuleEvaluatorSpec extends AnyFunSuite:
       case Right(parsed) => parsed
       case Left(error)   => fail(s"movement output parsing should succeed: $error")
 
+  private def parseAgentOutput(value: String): AgentOutput =
+    AgentOutput.parse(value) match
+      case Right(parsed) => parsed
+      case Left(error)   => fail(s"agent output parsing should succeed: $error")
+
+  private def parseRuleDetectionContent(value: String): RuleDetectionContent =
+    RuleDetectionContent.parse(value) match
+      case Right(parsed) => parsed
+      case Left(error)   => fail(s"rule detection content parsing should succeed: $error")
+
   private def parseMovementName(value: String): MovementName =
     MovementName.parse(value) match
       case Right(parsed) => parsed
@@ -309,7 +346,7 @@ final class RuleEvaluatorSpec extends AnyFunSuite:
   private final class StaticRuleIndexDetector(
       fixedValue: Option[Int]
   ) extends RuleIndexDetector:
-    override def detect(content: String, movementName: MovementName): Option[Int] =
+    override def detect(content: RuleDetectionContent, movementName: MovementName): Option[Int] =
       fixedValue
 
   private object StaticRuleIndexDetector:
@@ -320,8 +357,8 @@ final class RuleEvaluatorSpec extends AnyFunSuite:
       fixedValue: Option[Int]
   ) extends AiConditionJudge:
     override def judge(
-        agentOutput: String,
-        conditions: Vector[RuleJudgeCondition]
+        agentOutput: AgentOutput,
+        conditions: RuleJudgeConditions
     ): Either[PieceExecutionError, Option[Int]] =
       Right(fixedValue)
 

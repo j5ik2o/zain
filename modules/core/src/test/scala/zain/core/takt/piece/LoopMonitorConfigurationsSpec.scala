@@ -2,6 +2,7 @@ package zain.core.takt.piece
 
 import org.scalatest.funsuite.AnyFunSuite
 import zain.core.takt.primitives.MovementName
+import zain.core.takt.primitives.MovementNames
 
 final class LoopMonitorConfigurationsSpec extends AnyFunSuite:
   private val plan = parseMovementName("plan")
@@ -52,21 +53,15 @@ final class LoopMonitorConfigurationsSpec extends AnyFunSuite:
     val judge = parseLoopMonitorJudge(Vector(parseLoopMonitorRule("continue", "plan")))
 
     val actual = LoopMonitorConfiguration.create(
-      cycle = Vector.empty,
-      threshold = 2,
+      cycle = MovementNames.Empty,
+      threshold = parseLoopMonitorThreshold(2),
       judge = judge
     )
 
     assert(actual == Left(PieceDefinitionError.EmptyLoopMonitorCycle))
 
   test("should reject loop monitor configuration when threshold is non positive"):
-    val judge = parseLoopMonitorJudge(Vector(parseLoopMonitorRule("continue", "plan")))
-
-    val actual = LoopMonitorConfiguration.create(
-      cycle = Vector(plan, implement),
-      threshold = 0,
-      judge = judge
-    )
+    val actual = LoopMonitorThreshold.parse(0)
 
     assert(actual == Left(PieceDefinitionError.NonPositiveLoopMonitorThreshold))
 
@@ -74,8 +69,8 @@ final class LoopMonitorConfigurationsSpec extends AnyFunSuite:
     val judge = parseLoopMonitorJudge(Vector(parseLoopMonitorRule("continue", "plan")))
 
     val actual = LoopMonitorConfiguration.create(
-      cycle = Vector(plan),
-      threshold = 2,
+      cycle = MovementNames.create(Vector(plan)),
+      threshold = parseLoopMonitorThreshold(2),
       judge = judge
     )
 
@@ -92,12 +87,17 @@ final class LoopMonitorConfigurationsSpec extends AnyFunSuite:
       rules: Vector[LoopMonitorRule]
   ): LoopMonitorConfiguration =
     LoopMonitorConfiguration.create(
-      cycle = cycle,
-      threshold = threshold,
+      cycle = MovementNames.create(cycle),
+      threshold = parseLoopMonitorThreshold(threshold),
       judge = parseLoopMonitorJudge(rules)
     ) match
       case Right(parsed) => parsed
       case Left(error)   => fail(s"loop monitor configuration parsing should succeed: $error")
+
+  private def parseLoopMonitorThreshold(value: Int): LoopMonitorThreshold =
+    LoopMonitorThreshold.parse(value) match
+      case Right(parsed) => parsed
+      case Left(error)   => fail(s"loop monitor threshold parsing should succeed: $error")
 
   private def parseLoopMonitorJudge(rules: Vector[LoopMonitorRule]): LoopMonitorJudge =
     val parsedRules = LoopMonitorRules.create(rules) match

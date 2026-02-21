@@ -9,7 +9,7 @@ final class MovementRuleSpec extends AnyFunSuite:
     val actual = MovementRule.create(
       condition = """ai("approved")""",
       next = Some("COMPLETE"),
-      appendix = Some("appendix"),
+      appendix = Some(parseRuleAppendix("appendix")),
       requiresUserInput = true,
       interactiveOnly = true
     )
@@ -60,12 +60,11 @@ final class MovementRuleSpec extends AnyFunSuite:
     assert(actual == Left(PieceDefinitionError.InvalidRuleCondition))
 
   test("should reject empty appendix when appendix is specified"):
-    val actual = MovementRule.create(
-      condition = "ok",
-      next = Some("COMPLETE"),
-      appendix = Some(""),
-      requiresUserInput = false,
-      interactiveOnly = false
-    )
+    val actual = RuleAppendix.parse("")
 
     assert(actual == Left(PieceDefinitionError.EmptyRuleAppendix))
+
+  private def parseRuleAppendix(value: String): RuleAppendix =
+    RuleAppendix.parse(value) match
+      case Right(parsed) => parsed
+      case Left(error)   => fail(s"rule appendix parsing should succeed: $error")

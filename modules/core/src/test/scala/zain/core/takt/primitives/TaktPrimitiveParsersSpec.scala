@@ -3,6 +3,16 @@ package zain.core.takt.primitives
 import org.scalatest.funsuite.AnyFunSuite
 
 final class TaktPrimitiveParsersSpec extends AnyFunSuite:
+  test("should allow empty agent output"):
+    val actual = TaktPrimitiveParsers.parseAgentOutput("")
+
+    assert(actual.exists(_.value == ""))
+
+  test("should allow empty rule detection content"):
+    val actual = TaktPrimitiveParsers.parseRuleDetectionContent("")
+
+    assert(actual.exists(_.value == ""))
+
   test("should reject empty facet name"):
     val actual = TaktPrimitiveParsers.parseFacetName("")
 
@@ -62,6 +72,36 @@ final class TaktPrimitiveParsersSpec extends AnyFunSuite:
     val actual = TaktPrimitiveParsers.parsePartInstruction("i")
 
     assert(actual.exists(_.value == "i"))
+
+  test("should reject empty persona name"):
+    val actual = TaktPrimitiveParsers.parsePersonaName("")
+
+    assert(actual == Left(TaktPrimitiveError.EmptyPersonaName))
+
+  test("should allow one character persona name"):
+    val actual = TaktPrimitiveParsers.parsePersonaName("r")
+
+    assert(actual.exists(_.value == "r"))
+
+  test("should reject empty persona session id"):
+    val actual = TaktPrimitiveParsers.parsePersonaSessionId("")
+
+    assert(actual == Left(TaktPrimitiveError.EmptyPersonaSessionId))
+
+  test("should allow one character persona session id"):
+    val actual = TaktPrimitiveParsers.parsePersonaSessionId("s")
+
+    assert(actual.exists(_.value == "s"))
+
+  test("should reject empty user input"):
+    val actual = TaktPrimitiveParsers.parseUserInput("")
+
+    assert(actual == Left(TaktPrimitiveError.EmptyUserInput))
+
+  test("should allow one character user input"):
+    val actual = TaktPrimitiveParsers.parseUserInput("u")
+
+    assert(actual.exists(_.value == "u"))
 
   test("should reject non positive part timeout millis"):
     val zeroActual = TaktPrimitiveParsers.parsePartTimeoutMillis(0)

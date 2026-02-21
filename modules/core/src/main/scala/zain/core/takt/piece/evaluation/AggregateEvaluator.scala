@@ -36,7 +36,7 @@ final class AggregateEvaluator(
       case RuleCondition.Aggregate(aggregateType, conditions) =>
         matchesAggregateCondition(
           aggregateType = aggregateType,
-          expectedConditions = conditions,
+          expectedConditions = conditions.map(_.value),
           parallelSubMovements = parallelSubMovements
         )
       case _ =>

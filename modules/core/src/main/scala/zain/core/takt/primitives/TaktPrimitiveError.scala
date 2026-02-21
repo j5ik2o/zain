@@ -7,6 +7,9 @@ enum TaktPrimitiveError:
   case EmptyPartId
   case EmptyPartTitle
   case EmptyPartInstruction
+  case EmptyPersonaName
+  case EmptyPersonaSessionId
+  case EmptyUserInput
   case InvalidPartPermissionMode(value: String)
   case EmptyRuleCondition
   case InvalidRuleConditionSyntax

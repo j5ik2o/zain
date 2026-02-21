@@ -2,44 +2,29 @@ package zain.core.takt.inventory
 
 final case class ReferenceModelInventory private (
     private val targets: Map[ReferenceModelTarget, ReferenceSourcePaths],
-    private val exclusions: Map[String, ExclusionReason]
+    private val exclusions: Map[ExcludedName, ExclusionReason]
 ):
   def registerTarget(
       target: ReferenceModelTarget,
-      sourcePaths: Vector[String]
+      sourcePaths: ReferenceSourcePaths
   ): Either[ReferenceModelInventoryError, ReferenceModelInventory] =
     if sourcePaths.isEmpty then Left(ReferenceModelInventoryError.MissingReferenceSources(target))
-    else
-      parseSourcePaths(target, sourcePaths).map: parsedSourcePaths =>
-        copy(targets = targets.updated(target, parsedSourcePaths))
+    else Right(copy(targets = targets.updated(target, sourcePaths)))
 
   def registerExclusion(
-      excludedName: String,
-      reason: String
+      excludedName: ExcludedName,
+      reason: ExclusionReason
   ): Either[ReferenceModelInventoryError, ReferenceModelInventory] =
-    ExclusionReason.create(excludedName, reason).map: exclusionReason =>
-      copy(exclusions = exclusions.updated(excludedName, exclusionReason))
+    Right(copy(exclusions = exclusions.updated(excludedName, reason)))
 
   def referencesOf(target: ReferenceModelTarget): Option[ReferenceSourcePaths] =
     targets.get(target)
 
-  def exclusionOf(excludedName: String): Option[ExclusionReason] =
+  def exclusionOf(excludedName: ExcludedName): Option[ExclusionReason] =
     exclusions.get(excludedName)
 
   def registeredTargets: Set[ReferenceModelTarget] =
     targets.keySet
-
-  private def parseSourcePaths(
-      target: ReferenceModelTarget,
-      sourcePaths: Vector[String]
-  ): Either[ReferenceModelInventoryError, ReferenceSourcePaths] =
-    sourcePaths.foldLeft[Either[ReferenceModelInventoryError, ReferenceSourcePaths]](Right(ReferenceSourcePaths.Empty)) {
-      case (acc, currentPath) =>
-        for
-          parsedPaths <- acc
-          sourcePath <- ReferenceSourcePath.create(target, currentPath)
-        yield parsedPaths :+ sourcePath
-    }
 
 object ReferenceModelInventory:
   val Empty: ReferenceModelInventory = ReferenceModelInventory(Map.empty, Map.empty)
@@ -56,5 +41,21 @@ object ReferenceModelInventory:
 
     defaultMappings.foldLeft[Either[ReferenceModelInventoryError, ReferenceModelInventory]](Right(Empty)) {
       case (acc, (target, sourcePaths)) =>
-        acc.flatMap(_.registerTarget(target, sourcePaths))
+        for
+          inventory <- acc
+          parsedSourcePaths <- parseSourcePaths(target, sourcePaths)
+          updated <- inventory.registerTarget(target, parsedSourcePaths)
+        yield updated
+    }
+
+  def parseSourcePaths(
+      target: ReferenceModelTarget,
+      sourcePaths: Vector[String]
+  ): Either[ReferenceModelInventoryError, ReferenceSourcePaths] =
+    sourcePaths.foldLeft[Either[ReferenceModelInventoryError, ReferenceSourcePaths]](Right(ReferenceSourcePaths.Empty)) {
+      case (acc, currentPath) =>
+        for
+          parsedPaths <- acc
+          sourcePath <- ReferenceSourcePath.create(target, currentPath)
+        yield parsedPaths :+ sourcePath
     }
