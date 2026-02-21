@@ -20,27 +20,21 @@ final class MovementDefinitionSpec extends AnyFunSuite:
       rules = movementRulesOf(rule),
       facets = emptyFacets,
       facetCatalog = emptyFacetCatalog,
-      hasParallel = false,
-      hasArpeggio = false,
-      teamLeader = None
+      executionMode = MovementExecutionMode.Sequential
     )
     val parallelOnly = MovementDefinition.createTopLevel(
       name = movementName,
       rules = movementRulesOf(rule),
       facets = emptyFacets,
       facetCatalog = emptyFacetCatalog,
-      hasParallel = true,
-      hasArpeggio = false,
-      teamLeader = None
+      executionMode = MovementExecutionMode.Parallel
     )
     val teamLeaderOnly = MovementDefinition.createTopLevel(
       name = movementName,
       rules = movementRulesOf(rule),
       facets = emptyFacets,
       facetCatalog = emptyFacetCatalog,
-      hasParallel = false,
-      hasArpeggio = false,
-      teamLeader = Some(teamLeader)
+      executionMode = MovementExecutionMode.TeamLeader(teamLeader)
     )
 
     assert(noMode.isRight)
@@ -79,37 +73,24 @@ final class MovementDefinitionSpec extends AnyFunSuite:
 
     assert(actual.isRight)
 
-  test("should map legacy execution mode fields to explicit execution mode"):
-    val actual = MovementDefinitionInput.fromLegacy(
-      name = movementName,
-      rules = movementRulesOf(parseRule(condition = "ok", next = Some("verify"))),
-      facets = emptyFacets,
-      facetCatalog = emptyFacetCatalog,
+  test("should resolve execution mode from legacy style flags"):
+    val actual = MovementExecutionMode.resolve(
       hasParallel = false,
       hasArpeggio = false,
       teamLeader = None
     )
 
-    assert(actual.exists(_.executionMode == MovementExecutionMode.Sequential))
+    assert(actual == Right(MovementExecutionMode.Sequential))
 
-  test("should reject top level movement when multiple execution modes are selected"):
-    val rule = parseRule(condition = "ok", next = Some("verify"))
+  test("should reject execution mode resolve when multiple execution modes are selected"):
     val teamLeader = createTeamLeaderConfiguration(maxParts = 2, timeoutMillis = 90000)
 
-    val parallelAndArpeggio = MovementDefinition.createTopLevel(
-      name = movementName,
-      rules = movementRulesOf(rule),
-      facets = emptyFacets,
-      facetCatalog = emptyFacetCatalog,
+    val parallelAndArpeggio = MovementExecutionMode.resolve(
       hasParallel = true,
       hasArpeggio = true,
       teamLeader = None
     )
-    val parallelAndTeamLeader = MovementDefinition.createTopLevel(
-      name = movementName,
-      rules = movementRulesOf(rule),
-      facets = emptyFacets,
-      facetCatalog = emptyFacetCatalog,
+    val parallelAndTeamLeader = MovementExecutionMode.resolve(
       hasParallel = true,
       hasArpeggio = false,
       teamLeader = Some(teamLeader)
@@ -236,9 +217,7 @@ final class MovementDefinitionSpec extends AnyFunSuite:
       rules = movementRulesOf(ruleWithoutNext),
       facets = emptyFacets,
       facetCatalog = emptyFacetCatalog,
-      hasParallel = false,
-      hasArpeggio = false,
-      teamLeader = None
+      executionMode = MovementExecutionMode.Sequential
     )
 
     assert(actual == Left(PieceDefinitionError.MissingTopLevelRuleTransitionTarget))
@@ -251,30 +230,18 @@ final class MovementDefinitionSpec extends AnyFunSuite:
       rules = movementRulesOf(ruleWithoutNext),
       facets = emptyFacets,
       facetCatalog = emptyFacetCatalog,
-      hasParallel = false,
-      hasArpeggio = false,
-      teamLeader = None
+      executionMode = MovementExecutionMode.Sequential
     )
 
     assert(actual.isRight)
 
-  test("should return same failure category for same conflicting execution mode input"):
-    val rule = parseRule(condition = "ok", next = Some("verify"))
-
-    val first = MovementDefinition.createTopLevel(
-      name = movementName,
-      rules = movementRulesOf(rule),
-      facets = emptyFacets,
-      facetCatalog = emptyFacetCatalog,
+  test("should return same failure category for same conflicting execution mode resolve input"):
+    val first = MovementExecutionMode.resolve(
       hasParallel = true,
       hasArpeggio = true,
       teamLeader = None
     )
-    val second = MovementDefinition.createTopLevel(
-      name = movementName,
-      rules = movementRulesOf(rule),
-      facets = emptyFacets,
-      facetCatalog = emptyFacetCatalog,
+    val second = MovementExecutionMode.resolve(
       hasParallel = true,
       hasArpeggio = true,
       teamLeader = None
@@ -306,9 +273,7 @@ final class MovementDefinitionSpec extends AnyFunSuite:
       rules = movementRulesOf(parseRule(condition = "ok", next = Some("verify"))),
       facets = facets,
       facetCatalog = facetCatalog,
-      hasParallel = false,
-      hasArpeggio = false,
-      teamLeader = None
+      executionMode = MovementExecutionMode.Sequential
     )
 
     assert(actual == Left(PieceDefinitionError.UndefinedPolicyReference(unknownPolicy)))
@@ -335,9 +300,7 @@ final class MovementDefinitionSpec extends AnyFunSuite:
       rules = movementRulesOf(parseRule(condition = "ok", next = Some("verify"))),
       facets = facets,
       facetCatalog = facetCatalog,
-      hasParallel = false,
-      hasArpeggio = false,
-      teamLeader = None
+      executionMode = MovementExecutionMode.Sequential
     )
 
     assert(actual == Left(PieceDefinitionError.UndefinedPersonaReference(unknownPersona)))
@@ -364,9 +327,7 @@ final class MovementDefinitionSpec extends AnyFunSuite:
       rules = movementRulesOf(parseRule(condition = "ok", next = Some("verify"))),
       facets = facets,
       facetCatalog = facetCatalog,
-      hasParallel = false,
-      hasArpeggio = false,
-      teamLeader = None
+      executionMode = MovementExecutionMode.Sequential
     )
 
     assert(actual == Left(PieceDefinitionError.UndefinedKnowledgeReference(unknownKnowledge)))
@@ -393,9 +354,7 @@ final class MovementDefinitionSpec extends AnyFunSuite:
       rules = movementRulesOf(parseRule(condition = "ok", next = Some("verify"))),
       facets = facets,
       facetCatalog = facetCatalog,
-      hasParallel = false,
-      hasArpeggio = false,
-      teamLeader = None
+      executionMode = MovementExecutionMode.Sequential
     )
 
     assert(actual == Left(PieceDefinitionError.UndefinedInstructionReference(unknownInstruction)))
@@ -422,9 +381,7 @@ final class MovementDefinitionSpec extends AnyFunSuite:
       rules = movementRulesOf(parseRule(condition = "ok", next = Some("verify"))),
       facets = facets,
       facetCatalog = facetCatalog,
-      hasParallel = false,
-      hasArpeggio = false,
-      teamLeader = None
+      executionMode = MovementExecutionMode.Sequential
     )
 
     assert(actual == Left(PieceDefinitionError.UndefinedOutputContractReference(unknownOutputContract)))
@@ -469,9 +426,7 @@ final class MovementDefinitionSpec extends AnyFunSuite:
       rules = movementRulesOf(parseRule(condition = "ok", next = Some("verify"))),
       facets = facets,
       facetCatalog = facetCatalog,
-      hasParallel = false,
-      hasArpeggio = false,
-      teamLeader = None
+      executionMode = MovementExecutionMode.Sequential
     )
 
     assert(actual.isRight)

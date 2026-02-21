@@ -4,6 +4,7 @@ import org.scalatest.funsuite.AnyFunSuite
 import zain.core.takt.facet.FacetCatalog
 import zain.core.takt.movement.MovementDefinition
 import zain.core.takt.movement.MovementDefinitions
+import zain.core.takt.movement.MovementExecutionMode
 import zain.core.takt.movement.MovementFacets
 import zain.core.takt.movement.MovementRule
 import zain.core.takt.movement.MovementRules
@@ -205,9 +206,7 @@ final class PieceDefinitionFactorySpec extends AnyFunSuite:
       rules = MovementRules.create(Vector(parseRule(condition = "ok", next = Some(next)))),
       facets = MovementFacets.Empty,
       facetCatalog = FacetCatalog.Empty,
-      hasParallel = false,
-      hasArpeggio = false,
-      teamLeader = None
+      executionMode = MovementExecutionMode.Sequential
     ) match
       case Right(parsed) => parsed
       case Left(error)   => fail(s"movement creation should succeed: $error")

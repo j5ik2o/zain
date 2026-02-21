@@ -118,60 +118,6 @@ object MovementDefinition:
       requireTransitionTarget = true
     )
 
-  @deprecated(
-    "Use createTopLevel(..., executionMode = ..., parallel = ..., arpeggio = ..., outputContractItems = ...) instead.",
-    "0.1.0"
-  )
-  def createTopLevel(
-      name: MovementName,
-      rules: MovementRules,
-      facets: MovementFacets,
-      facetCatalog: FacetCatalog,
-      hasParallel: Boolean,
-      hasArpeggio: Boolean,
-      teamLeader: Option[TeamLeaderConfiguration]
-  ): Either[PieceDefinitionError, MovementDefinition] =
-    createTopLevel(
-      name = name,
-      rules = rules,
-      facets = facets,
-      facetCatalog = facetCatalog,
-      hasParallel = hasParallel,
-      hasArpeggio = hasArpeggio,
-      teamLeader = teamLeader,
-      outputContractItems = OutputContractItems.Empty
-    )
-
-  @deprecated(
-    "Use createTopLevel(..., executionMode = ..., parallel = ..., arpeggio = ..., outputContractItems = ...) instead.",
-    "0.1.0"
-  )
-  def createTopLevel(
-      name: MovementName,
-      rules: MovementRules,
-      facets: MovementFacets,
-      facetCatalog: FacetCatalog,
-      hasParallel: Boolean,
-      hasArpeggio: Boolean,
-      teamLeader: Option[TeamLeaderConfiguration],
-      outputContractItems: OutputContractItems
-  ): Either[PieceDefinitionError, MovementDefinition] =
-    MovementExecutionMode.resolve(
-      hasParallel = hasParallel,
-      hasArpeggio = hasArpeggio,
-      teamLeader = teamLeader
-    ).flatMap: executionMode =>
-      createTopLevel(
-        name = name,
-        rules = rules,
-        facets = facets,
-        facetCatalog = facetCatalog,
-        executionMode = executionMode,
-        parallel = if hasParallel then Some(ParallelConfiguration.Empty) else None,
-        arpeggio = if hasArpeggio then Some(ArpeggioConfiguration.Default) else None,
-        outputContractItems = outputContractItems
-      )
-
   def createNested(
       name: MovementName,
       rules: MovementRules,
@@ -211,60 +157,6 @@ object MovementDefinition:
       outputContractItems = outputContractItems,
       requireTransitionTarget = false
     )
-
-  @deprecated(
-    "Use createNested(..., executionMode = ..., parallel = ..., arpeggio = ..., outputContractItems = ...) instead.",
-    "0.1.0"
-  )
-  def createNested(
-      name: MovementName,
-      rules: MovementRules,
-      facets: MovementFacets,
-      facetCatalog: FacetCatalog,
-      hasParallel: Boolean,
-      hasArpeggio: Boolean,
-      teamLeader: Option[TeamLeaderConfiguration]
-  ): Either[PieceDefinitionError, MovementDefinition] =
-    createNested(
-      name = name,
-      rules = rules,
-      facets = facets,
-      facetCatalog = facetCatalog,
-      hasParallel = hasParallel,
-      hasArpeggio = hasArpeggio,
-      teamLeader = teamLeader,
-      outputContractItems = OutputContractItems.Empty
-    )
-
-  @deprecated(
-    "Use createNested(..., executionMode = ..., parallel = ..., arpeggio = ..., outputContractItems = ...) instead.",
-    "0.1.0"
-  )
-  def createNested(
-      name: MovementName,
-      rules: MovementRules,
-      facets: MovementFacets,
-      facetCatalog: FacetCatalog,
-      hasParallel: Boolean,
-      hasArpeggio: Boolean,
-      teamLeader: Option[TeamLeaderConfiguration],
-      outputContractItems: OutputContractItems
-  ): Either[PieceDefinitionError, MovementDefinition] =
-    MovementExecutionMode.resolve(
-      hasParallel = hasParallel,
-      hasArpeggio = hasArpeggio,
-      teamLeader = teamLeader
-    ).flatMap: executionMode =>
-      createNested(
-        name = name,
-        rules = rules,
-        facets = facets,
-        facetCatalog = facetCatalog,
-        executionMode = executionMode,
-        parallel = if hasParallel then Some(ParallelConfiguration.Empty) else None,
-        arpeggio = if hasArpeggio then Some(ArpeggioConfiguration.Default) else None,
-        outputContractItems = outputContractItems
-      )
 
   private def create(
       name: MovementName,
