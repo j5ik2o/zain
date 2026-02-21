@@ -20,7 +20,7 @@ final case class MovementDefinitions private (
   def :+(movement: MovementDefinition): MovementDefinitions =
     MovementDefinitions(values :+ movement)
 
-  def toVector: Vector[MovementDefinition] =
+  def breachEncapsulationOfValues: Vector[MovementDefinition] =
     values
 
 object MovementDefinitions:

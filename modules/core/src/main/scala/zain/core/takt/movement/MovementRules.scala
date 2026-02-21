@@ -12,7 +12,7 @@ final case class MovementRules private (
   def :+(rule: MovementRule): MovementRules =
     MovementRules(values :+ rule)
 
-  def toVector: Vector[MovementRule] =
+  def breachEncapsulationOfValues: Vector[MovementRule] =
     values
 
 object MovementRules:

@@ -9,7 +9,7 @@ final case class FacetReferenceEntries private (
   def foldLeft[B](initial: B)(operation: (B, FacetReferenceEntry) => B): B =
     values.foldLeft(initial)(operation)
 
-  def toVector: Vector[FacetReferenceEntry] =
+  def breachEncapsulationOfValues: Vector[FacetReferenceEntry] =
     values
 
 object FacetReferenceEntries:

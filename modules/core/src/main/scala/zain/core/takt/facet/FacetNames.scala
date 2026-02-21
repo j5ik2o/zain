@@ -11,7 +11,7 @@ final case class FacetNames private (
   def toSet: Set[FacetName] =
     values.toSet
 
-  def toVector: Vector[FacetName] =
+  def breachEncapsulationOfValues: Vector[FacetName] =
     values
 
 object FacetNames:

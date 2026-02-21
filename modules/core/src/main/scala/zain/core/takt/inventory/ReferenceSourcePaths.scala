@@ -12,7 +12,7 @@ final case class ReferenceSourcePaths private (
   def :+(value: ReferenceSourcePath): ReferenceSourcePaths =
     ReferenceSourcePaths(values :+ value)
 
-  def toVector: Vector[ReferenceSourcePath] =
+  def breachEncapsulationOfValues: Vector[ReferenceSourcePath] =
     values
 
 object ReferenceSourcePaths:
