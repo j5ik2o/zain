@@ -4,13 +4,35 @@ import zain.core.takt.facet.FacetCatalog
 import zain.core.takt.facet.FacetReferences
 import zain.core.takt.piece.PieceDefinitionError
 import zain.core.takt.primitives.MovementName
+import zain.core.takt.primitives.TransitionTarget
 
 final case class MovementDefinition private (
     name: MovementName,
     rules: MovementRules,
     facets: MovementFacets,
     executionMode: MovementExecutionMode
-)
+):
+  def parseTransitionTargets(
+      movementNames: Set[MovementName]
+  ): Either[PieceDefinitionError, MovementDefinition] =
+    rules.foldLeft[Either[PieceDefinitionError, MovementRules]](Right(MovementRules.Empty)) {
+      (acc, rule) =>
+        for
+          parsedRules <- acc
+          parsedRule <- parseRuleTransitionTarget(rule, movementNames)
+        yield parsedRules :+ parsedRule
+    }.map(_ => this)
+
+  private def parseRuleTransitionTarget(
+      rule: MovementRule,
+      movementNames: Set[MovementName]
+  ): Either[PieceDefinitionError, MovementRule] =
+    rule.next match
+      case Some(TransitionTarget.Movement(target)) =>
+        if movementNames.contains(target) then Right(rule)
+        else Left(PieceDefinitionError.UndefinedTransitionTarget(target = target, from = name))
+      case _ =>
+        Right(rule)
 
 object MovementDefinition:
   def create(
