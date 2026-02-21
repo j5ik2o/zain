@@ -1,7 +1,7 @@
 package zain.core.takt.inventory
 
 final case class ReferenceModelInventory private (
-    private val targets: Map[ReferenceModelTarget, Vector[ReferenceSourcePath]],
+    private val targets: Map[ReferenceModelTarget, ReferenceSourcePaths],
     private val exclusions: Map[String, ExclusionReason]
 ):
   def registerTarget(
@@ -20,7 +20,7 @@ final case class ReferenceModelInventory private (
     ExclusionReason.create(excludedName, reason).map: exclusionReason =>
       copy(exclusions = exclusions.updated(excludedName, exclusionReason))
 
-  def referencesOf(target: ReferenceModelTarget): Option[Vector[ReferenceSourcePath]] =
+  def referencesOf(target: ReferenceModelTarget): Option[ReferenceSourcePaths] =
     targets.get(target)
 
   def exclusionOf(excludedName: String): Option[ExclusionReason] =
@@ -32,8 +32,8 @@ final case class ReferenceModelInventory private (
   private def parseSourcePaths(
       target: ReferenceModelTarget,
       sourcePaths: Vector[String]
-  ): Either[ReferenceModelInventoryError, Vector[ReferenceSourcePath]] =
-    sourcePaths.foldLeft[Either[ReferenceModelInventoryError, Vector[ReferenceSourcePath]]](Right(Vector.empty)) {
+  ): Either[ReferenceModelInventoryError, ReferenceSourcePaths] =
+    sourcePaths.foldLeft[Either[ReferenceModelInventoryError, ReferenceSourcePaths]](Right(ReferenceSourcePaths.Empty)) {
       case (acc, currentPath) =>
         for
           parsedPaths <- acc

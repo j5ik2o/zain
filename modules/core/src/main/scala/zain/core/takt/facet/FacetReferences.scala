@@ -4,40 +4,54 @@ import zain.core.takt.primitives.FacetName
 
 final case class FacetReferences private (
     persona: Option[FacetName],
-    policies: Vector[FacetName],
-    knowledge: Vector[FacetName],
+    policies: FacetNames,
+    knowledge: FacetNames,
     instruction: Option[FacetName],
-    outputContracts: Vector[FacetName]
+    outputContracts: FacetNames
 ):
-  def entries: Vector[FacetReferenceEntry] =
+  def entries: FacetReferenceEntries =
     personaEntries ++
       policyEntries ++
       knowledgeEntries ++
       instructionEntries ++
       outputContractEntries
 
-  private def personaEntries: Vector[FacetReferenceEntry] =
-    persona.toVector.map(FacetReferenceEntry.of(FacetCategory.Persona, _))
+  private def personaEntries: FacetReferenceEntries =
+    persona match
+      case Some(value) =>
+        FacetReferenceEntries.one(FacetReferenceEntry.of(FacetCategory.Persona, value))
+      case None =>
+        FacetReferenceEntries.Empty
 
-  private def policyEntries: Vector[FacetReferenceEntry] =
-    policies.map(FacetReferenceEntry.of(FacetCategory.Policy, _))
+  private def policyEntries: FacetReferenceEntries =
+    FacetReferenceEntries.create(
+      policies.map(FacetReferenceEntry.of(FacetCategory.Policy, _))
+    )
 
-  private def knowledgeEntries: Vector[FacetReferenceEntry] =
-    knowledge.map(FacetReferenceEntry.of(FacetCategory.Knowledge, _))
+  private def knowledgeEntries: FacetReferenceEntries =
+    FacetReferenceEntries.create(
+      knowledge.map(FacetReferenceEntry.of(FacetCategory.Knowledge, _))
+    )
 
-  private def instructionEntries: Vector[FacetReferenceEntry] =
-    instruction.toVector.map(FacetReferenceEntry.of(FacetCategory.Instruction, _))
+  private def instructionEntries: FacetReferenceEntries =
+    instruction match
+      case Some(value) =>
+        FacetReferenceEntries.one(FacetReferenceEntry.of(FacetCategory.Instruction, value))
+      case None =>
+        FacetReferenceEntries.Empty
 
-  private def outputContractEntries: Vector[FacetReferenceEntry] =
-    outputContracts.map(FacetReferenceEntry.of(FacetCategory.OutputContract, _))
+  private def outputContractEntries: FacetReferenceEntries =
+    FacetReferenceEntries.create(
+      outputContracts.map(FacetReferenceEntry.of(FacetCategory.OutputContract, _))
+    )
 
 object FacetReferences:
   def create(
       persona: Option[FacetName],
-      policies: Vector[FacetName],
-      knowledge: Vector[FacetName],
+      policies: FacetNames,
+      knowledge: FacetNames,
       instruction: Option[FacetName],
-      outputContracts: Vector[FacetName]
+      outputContracts: FacetNames
   ): FacetReferences =
     FacetReferences(
       persona = persona,

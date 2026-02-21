@@ -2,6 +2,7 @@ package zain.core.takt.movement
 
 import org.scalatest.funsuite.AnyFunSuite
 import zain.core.takt.facet.FacetCatalog
+import zain.core.takt.facet.FacetNames
 import zain.core.takt.piece.PieceDefinitionError
 import zain.core.takt.primitives.FacetName
 import zain.core.takt.primitives.MovementName
@@ -16,7 +17,7 @@ final class MovementDefinitionSpec extends AnyFunSuite:
     val teamLeader = createTeamLeaderConfiguration(maxParts = 2, timeoutMillis = 90000)
     val noMode = MovementDefinition.createTopLevel(
       name = movementName,
-      rules = Vector(rule),
+      rules = movementRulesOf(rule),
       facets = emptyFacets,
       facetCatalog = emptyFacetCatalog,
       hasParallel = false,
@@ -25,7 +26,7 @@ final class MovementDefinitionSpec extends AnyFunSuite:
     )
     val parallelOnly = MovementDefinition.createTopLevel(
       name = movementName,
-      rules = Vector(rule),
+      rules = movementRulesOf(rule),
       facets = emptyFacets,
       facetCatalog = emptyFacetCatalog,
       hasParallel = true,
@@ -34,7 +35,7 @@ final class MovementDefinitionSpec extends AnyFunSuite:
     )
     val teamLeaderOnly = MovementDefinition.createTopLevel(
       name = movementName,
-      rules = Vector(rule),
+      rules = movementRulesOf(rule),
       facets = emptyFacets,
       facetCatalog = emptyFacetCatalog,
       hasParallel = false,
@@ -49,7 +50,7 @@ final class MovementDefinitionSpec extends AnyFunSuite:
   test("should create top level movement from scoped input API"):
     val input = MovementDefinitionInput(
       name = movementName,
-      rules = Vector(parseRule(condition = "ok", next = Some("verify"))),
+      rules = movementRulesOf(parseRule(condition = "ok", next = Some("verify"))),
       facets = emptyFacets,
       facetCatalog = emptyFacetCatalog,
       executionMode = MovementExecutionMode.Sequential
@@ -65,7 +66,7 @@ final class MovementDefinitionSpec extends AnyFunSuite:
   test("should allow nested movement from scoped input API to omit transition target"):
     val input = MovementDefinitionInput(
       name = movementName,
-      rules = Vector(parseRule(condition = "ok", next = None)),
+      rules = movementRulesOf(parseRule(condition = "ok", next = None)),
       facets = emptyFacets,
       facetCatalog = emptyFacetCatalog,
       executionMode = MovementExecutionMode.Sequential
@@ -81,7 +82,7 @@ final class MovementDefinitionSpec extends AnyFunSuite:
   test("should map legacy execution mode fields to explicit execution mode"):
     val actual = MovementDefinitionInput.fromLegacy(
       name = movementName,
-      rules = Vector(parseRule(condition = "ok", next = Some("verify"))),
+      rules = movementRulesOf(parseRule(condition = "ok", next = Some("verify"))),
       facets = emptyFacets,
       facetCatalog = emptyFacetCatalog,
       hasParallel = false,
@@ -97,7 +98,7 @@ final class MovementDefinitionSpec extends AnyFunSuite:
 
     val parallelAndArpeggio = MovementDefinition.createTopLevel(
       name = movementName,
-      rules = Vector(rule),
+      rules = movementRulesOf(rule),
       facets = emptyFacets,
       facetCatalog = emptyFacetCatalog,
       hasParallel = true,
@@ -106,7 +107,7 @@ final class MovementDefinitionSpec extends AnyFunSuite:
     )
     val parallelAndTeamLeader = MovementDefinition.createTopLevel(
       name = movementName,
-      rules = Vector(rule),
+      rules = movementRulesOf(rule),
       facets = emptyFacets,
       facetCatalog = emptyFacetCatalog,
       hasParallel = true,
@@ -122,28 +123,28 @@ final class MovementDefinitionSpec extends AnyFunSuite:
 
     val sequential = MovementDefinition.createTopLevel(
       name = movementName,
-      rules = Vector(parseRule(condition = "ok", next = Some("verify"))),
+      rules = movementRulesOf(parseRule(condition = "ok", next = Some("verify"))),
       facets = emptyFacets,
       facetCatalog = emptyFacetCatalog,
       executionMode = MovementExecutionMode.Sequential
     )
     val parallel = MovementDefinition.createTopLevel(
       name = movementName,
-      rules = Vector(parseRule(condition = "ok", next = Some("verify"))),
+      rules = movementRulesOf(parseRule(condition = "ok", next = Some("verify"))),
       facets = emptyFacets,
       facetCatalog = emptyFacetCatalog,
       executionMode = MovementExecutionMode.Parallel
     )
     val arpeggio = MovementDefinition.createTopLevel(
       name = movementName,
-      rules = Vector(parseRule(condition = "ok", next = Some("verify"))),
+      rules = movementRulesOf(parseRule(condition = "ok", next = Some("verify"))),
       facets = emptyFacets,
       facetCatalog = emptyFacetCatalog,
       executionMode = MovementExecutionMode.Arpeggio
     )
     val withTeamLeader = MovementDefinition.createTopLevel(
       name = movementName,
-      rules = Vector(parseRule(condition = "ok", next = Some("verify"))),
+      rules = movementRulesOf(parseRule(condition = "ok", next = Some("verify"))),
       facets = emptyFacets,
       facetCatalog = emptyFacetCatalog,
       executionMode = MovementExecutionMode.TeamLeader(teamLeader)
@@ -175,7 +176,7 @@ final class MovementDefinitionSpec extends AnyFunSuite:
 
     val actual = MovementDefinition.createTopLevel(
       name = movementName,
-      rules = Vector(ruleWithoutNext),
+      rules = movementRulesOf(ruleWithoutNext),
       facets = emptyFacets,
       facetCatalog = emptyFacetCatalog,
       hasParallel = false,
@@ -190,7 +191,7 @@ final class MovementDefinitionSpec extends AnyFunSuite:
 
     val actual = MovementDefinition.createNested(
       name = movementName,
-      rules = Vector(ruleWithoutNext),
+      rules = movementRulesOf(ruleWithoutNext),
       facets = emptyFacets,
       facetCatalog = emptyFacetCatalog,
       hasParallel = false,
@@ -205,7 +206,7 @@ final class MovementDefinitionSpec extends AnyFunSuite:
 
     val first = MovementDefinition.createTopLevel(
       name = movementName,
-      rules = Vector(rule),
+      rules = movementRulesOf(rule),
       facets = emptyFacets,
       facetCatalog = emptyFacetCatalog,
       hasParallel = true,
@@ -214,7 +215,7 @@ final class MovementDefinitionSpec extends AnyFunSuite:
     )
     val second = MovementDefinition.createTopLevel(
       name = movementName,
-      rules = Vector(rule),
+      rules = movementRulesOf(rule),
       facets = emptyFacets,
       facetCatalog = emptyFacetCatalog,
       hasParallel = true,
@@ -229,23 +230,23 @@ final class MovementDefinitionSpec extends AnyFunSuite:
     val knownPolicy = parseFacetName("coding")
     val unknownPolicy = parseFacetName("missing")
     val facetCatalog = FacetCatalog.create(
-      personas = Vector.empty,
-      policies = Vector(knownPolicy),
-      knowledge = Vector.empty,
-      instructions = Vector.empty,
-      outputContracts = Vector.empty
+      personas = FacetNames.Empty,
+      policies = facetNamesOf(knownPolicy),
+      knowledge = FacetNames.Empty,
+      instructions = FacetNames.Empty,
+      outputContracts = FacetNames.Empty
     )
     val facets = MovementFacets.create(
       persona = None,
-      policies = Vector(unknownPolicy),
-      knowledge = Vector.empty,
+      policies = facetNamesOf(unknownPolicy),
+      knowledge = FacetNames.Empty,
       instruction = None,
-      outputContracts = Vector.empty
+      outputContracts = FacetNames.Empty
     )
 
     val actual = MovementDefinition.createTopLevel(
       name = movementName,
-      rules = Vector(parseRule(condition = "ok", next = Some("verify"))),
+      rules = movementRulesOf(parseRule(condition = "ok", next = Some("verify"))),
       facets = facets,
       facetCatalog = facetCatalog,
       hasParallel = false,
@@ -258,23 +259,23 @@ final class MovementDefinitionSpec extends AnyFunSuite:
   test("should reject movement creation when persona reference is undefined"):
     val unknownPersona = parseFacetName("unknown-persona")
     val facetCatalog = FacetCatalog.create(
-      personas = Vector(parseFacetName("known-persona")),
-      policies = Vector.empty,
-      knowledge = Vector.empty,
-      instructions = Vector.empty,
-      outputContracts = Vector.empty
+      personas = facetNamesOf(parseFacetName("known-persona")),
+      policies = FacetNames.Empty,
+      knowledge = FacetNames.Empty,
+      instructions = FacetNames.Empty,
+      outputContracts = FacetNames.Empty
     )
     val facets = MovementFacets.create(
       persona = Some(unknownPersona),
-      policies = Vector.empty,
-      knowledge = Vector.empty,
+      policies = FacetNames.Empty,
+      knowledge = FacetNames.Empty,
       instruction = None,
-      outputContracts = Vector.empty
+      outputContracts = FacetNames.Empty
     )
 
     val actual = MovementDefinition.createTopLevel(
       name = movementName,
-      rules = Vector(parseRule(condition = "ok", next = Some("verify"))),
+      rules = movementRulesOf(parseRule(condition = "ok", next = Some("verify"))),
       facets = facets,
       facetCatalog = facetCatalog,
       hasParallel = false,
@@ -287,23 +288,23 @@ final class MovementDefinitionSpec extends AnyFunSuite:
   test("should reject movement creation when knowledge reference is undefined"):
     val unknownKnowledge = parseFacetName("unknown-knowledge")
     val facetCatalog = FacetCatalog.create(
-      personas = Vector.empty,
-      policies = Vector.empty,
-      knowledge = Vector(parseFacetName("known-knowledge")),
-      instructions = Vector.empty,
-      outputContracts = Vector.empty
+      personas = FacetNames.Empty,
+      policies = FacetNames.Empty,
+      knowledge = facetNamesOf(parseFacetName("known-knowledge")),
+      instructions = FacetNames.Empty,
+      outputContracts = FacetNames.Empty
     )
     val facets = MovementFacets.create(
       persona = None,
-      policies = Vector.empty,
-      knowledge = Vector(unknownKnowledge),
+      policies = FacetNames.Empty,
+      knowledge = facetNamesOf(unknownKnowledge),
       instruction = None,
-      outputContracts = Vector.empty
+      outputContracts = FacetNames.Empty
     )
 
     val actual = MovementDefinition.createTopLevel(
       name = movementName,
-      rules = Vector(parseRule(condition = "ok", next = Some("verify"))),
+      rules = movementRulesOf(parseRule(condition = "ok", next = Some("verify"))),
       facets = facets,
       facetCatalog = facetCatalog,
       hasParallel = false,
@@ -316,23 +317,23 @@ final class MovementDefinitionSpec extends AnyFunSuite:
   test("should reject movement creation when instruction reference is undefined"):
     val unknownInstruction = parseFacetName("unknown-instruction")
     val facetCatalog = FacetCatalog.create(
-      personas = Vector.empty,
-      policies = Vector.empty,
-      knowledge = Vector.empty,
-      instructions = Vector(parseFacetName("known-instruction")),
-      outputContracts = Vector.empty
+      personas = FacetNames.Empty,
+      policies = FacetNames.Empty,
+      knowledge = FacetNames.Empty,
+      instructions = facetNamesOf(parseFacetName("known-instruction")),
+      outputContracts = FacetNames.Empty
     )
     val facets = MovementFacets.create(
       persona = None,
-      policies = Vector.empty,
-      knowledge = Vector.empty,
+      policies = FacetNames.Empty,
+      knowledge = FacetNames.Empty,
       instruction = Some(unknownInstruction),
-      outputContracts = Vector.empty
+      outputContracts = FacetNames.Empty
     )
 
     val actual = MovementDefinition.createTopLevel(
       name = movementName,
-      rules = Vector(parseRule(condition = "ok", next = Some("verify"))),
+      rules = movementRulesOf(parseRule(condition = "ok", next = Some("verify"))),
       facets = facets,
       facetCatalog = facetCatalog,
       hasParallel = false,
@@ -345,23 +346,23 @@ final class MovementDefinitionSpec extends AnyFunSuite:
   test("should reject movement creation when output contract reference is undefined"):
     val unknownOutputContract = parseFacetName("unknown-output-contract")
     val facetCatalog = FacetCatalog.create(
-      personas = Vector.empty,
-      policies = Vector.empty,
-      knowledge = Vector.empty,
-      instructions = Vector.empty,
-      outputContracts = Vector(parseFacetName("known-output-contract"))
+      personas = FacetNames.Empty,
+      policies = FacetNames.Empty,
+      knowledge = FacetNames.Empty,
+      instructions = FacetNames.Empty,
+      outputContracts = facetNamesOf(parseFacetName("known-output-contract"))
     )
     val facets = MovementFacets.create(
       persona = None,
-      policies = Vector.empty,
-      knowledge = Vector.empty,
+      policies = FacetNames.Empty,
+      knowledge = FacetNames.Empty,
       instruction = None,
-      outputContracts = Vector(unknownOutputContract)
+      outputContracts = facetNamesOf(unknownOutputContract)
     )
 
     val actual = MovementDefinition.createTopLevel(
       name = movementName,
-      rules = Vector(parseRule(condition = "ok", next = Some("verify"))),
+      rules = movementRulesOf(parseRule(condition = "ok", next = Some("verify"))),
       facets = facets,
       facetCatalog = facetCatalog,
       hasParallel = false,
@@ -378,23 +379,23 @@ final class MovementDefinitionSpec extends AnyFunSuite:
     val instruction = parseFacetName("instruction")
     val outputContract = parseFacetName("output-contract")
     val facetCatalog = FacetCatalog.create(
-      personas = Vector(persona),
-      policies = Vector(policy),
-      knowledge = Vector(knowledge),
-      instructions = Vector(instruction),
-      outputContracts = Vector(outputContract)
+      personas = facetNamesOf(persona),
+      policies = facetNamesOf(policy),
+      knowledge = facetNamesOf(knowledge),
+      instructions = facetNamesOf(instruction),
+      outputContracts = facetNamesOf(outputContract)
     )
     val facets = MovementFacets.create(
       persona = Some(persona),
-      policies = Vector(policy),
-      knowledge = Vector(knowledge),
+      policies = facetNamesOf(policy),
+      knowledge = facetNamesOf(knowledge),
       instruction = Some(instruction),
-      outputContracts = Vector(outputContract)
+      outputContracts = facetNamesOf(outputContract)
     )
 
     val actual = MovementDefinition.createTopLevel(
       name = movementName,
-      rules = Vector(parseRule(condition = "ok", next = Some("verify"))),
+      rules = movementRulesOf(parseRule(condition = "ok", next = Some("verify"))),
       facets = facets,
       facetCatalog = facetCatalog,
       hasParallel = false,
@@ -403,6 +404,12 @@ final class MovementDefinitionSpec extends AnyFunSuite:
     )
 
     assert(actual.isRight)
+
+  private def movementRulesOf(values: MovementRule*): MovementRules =
+    MovementRules.create(values.toVector)
+
+  private def facetNamesOf(values: FacetName*): FacetNames =
+    FacetNames.create(values.toVector)
 
   private def createTeamLeaderConfiguration(maxParts: Int, timeoutMillis: Int): TeamLeaderConfiguration =
     TeamLeaderConfiguration.create(maxParts, timeoutMillis) match

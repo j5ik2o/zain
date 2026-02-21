@@ -7,7 +7,7 @@ import zain.core.takt.primitives.MovementName
 
 final case class MovementDefinition private (
     name: MovementName,
-    rules: Vector[MovementRule],
+    rules: MovementRules,
     facets: MovementFacets,
     executionMode: MovementExecutionMode
 )
@@ -37,7 +37,7 @@ object MovementDefinition:
 
   def createTopLevel(
       name: MovementName,
-      rules: Vector[MovementRule],
+      rules: MovementRules,
       facets: MovementFacets,
       facetCatalog: FacetCatalog,
       executionMode: MovementExecutionMode
@@ -53,7 +53,7 @@ object MovementDefinition:
 
   def createTopLevel(
       name: MovementName,
-      rules: Vector[MovementRule],
+      rules: MovementRules,
       facets: MovementFacets,
       facetCatalog: FacetCatalog,
       hasParallel: Boolean,
@@ -75,7 +75,7 @@ object MovementDefinition:
 
   def createNested(
       name: MovementName,
-      rules: Vector[MovementRule],
+      rules: MovementRules,
       facets: MovementFacets,
       facetCatalog: FacetCatalog,
       executionMode: MovementExecutionMode
@@ -91,7 +91,7 @@ object MovementDefinition:
 
   def createNested(
       name: MovementName,
-      rules: Vector[MovementRule],
+      rules: MovementRules,
       facets: MovementFacets,
       facetCatalog: FacetCatalog,
       hasParallel: Boolean,
@@ -113,7 +113,7 @@ object MovementDefinition:
 
   private def create(
       name: MovementName,
-      rules: Vector[MovementRule],
+      rules: MovementRules,
       facets: MovementFacets,
       facetCatalog: FacetCatalog,
       executionMode: MovementExecutionMode,
@@ -133,9 +133,9 @@ object MovementDefinition:
     )
 
   private def parseRuleTransitionTargets(
-      rules: Vector[MovementRule],
+      rules: MovementRules,
       requireTransitionTarget: Boolean
-  ): Either[PieceDefinitionError, Vector[MovementRule]] =
+  ): Either[PieceDefinitionError, MovementRules] =
     if !requireTransitionTarget || rules.forall(_.next.nonEmpty) then Right(rules)
     else Left(PieceDefinitionError.MissingTopLevelRuleTransitionTarget)
 

@@ -3,8 +3,10 @@ package zain.core.takt.piece
 import org.scalatest.funsuite.AnyFunSuite
 import zain.core.takt.facet.FacetCatalog
 import zain.core.takt.movement.MovementDefinition
+import zain.core.takt.movement.MovementDefinitions
 import zain.core.takt.movement.MovementFacets
 import zain.core.takt.movement.MovementRule
+import zain.core.takt.movement.MovementRules
 import zain.core.takt.primitives.MovementName
 import zain.core.takt.primitives.PieceName
 
@@ -18,7 +20,7 @@ final class PieceDefinitionFactorySpec extends AnyFunSuite:
     val actual = PieceDefinitionFactory.create(
       PieceDraft(
         name = pieceName,
-        movements = Vector(planMovement),
+        movements = MovementDefinitions.create(Vector(planMovement)),
         initialMovement = Some(planMovement.name),
         maxMovements = Some(1)
       )
@@ -30,7 +32,7 @@ final class PieceDefinitionFactorySpec extends AnyFunSuite:
     val actual = PieceDefinitionFactory.create(
       PieceDraft(
         name = pieceName,
-        movements = Vector.empty,
+        movements = MovementDefinitions.Empty,
         initialMovement = None,
         maxMovements = None
       )
@@ -42,7 +44,7 @@ final class PieceDefinitionFactorySpec extends AnyFunSuite:
     val actual = PieceDefinitionFactory.create(
       PieceDraft(
         name = pieceName,
-        movements = Vector(planMovement, implementMovement),
+        movements = MovementDefinitions.create(Vector(planMovement, implementMovement)),
         initialMovement = None,
         maxMovements = Some(5)
       )
@@ -54,7 +56,7 @@ final class PieceDefinitionFactorySpec extends AnyFunSuite:
     val actual = PieceDefinitionFactory.create(
       PieceDraft(
         name = pieceName,
-        movements = Vector(planMovement, implementMovement),
+        movements = MovementDefinitions.create(Vector(planMovement, implementMovement)),
         initialMovement = Some(verifyMovement),
         maxMovements = Some(5)
       )
@@ -66,7 +68,7 @@ final class PieceDefinitionFactorySpec extends AnyFunSuite:
     val actual = PieceDefinitionFactory.create(
       PieceDraft(
         name = pieceName,
-        movements = Vector(planMovement),
+        movements = MovementDefinitions.create(Vector(planMovement)),
         initialMovement = None,
         maxMovements = None
       )
@@ -78,7 +80,7 @@ final class PieceDefinitionFactorySpec extends AnyFunSuite:
     val zeroActual = PieceDefinitionFactory.create(
       PieceDraft(
         name = pieceName,
-        movements = Vector(planMovement),
+        movements = MovementDefinitions.create(Vector(planMovement)),
         initialMovement = None,
         maxMovements = Some(0)
       )
@@ -86,7 +88,7 @@ final class PieceDefinitionFactorySpec extends AnyFunSuite:
     val negativeActual = PieceDefinitionFactory.create(
       PieceDraft(
         name = pieceName,
-        movements = Vector(planMovement),
+        movements = MovementDefinitions.create(Vector(planMovement)),
         initialMovement = None,
         maxMovements = Some(-1)
       )
@@ -103,7 +105,7 @@ final class PieceDefinitionFactorySpec extends AnyFunSuite:
     val actual = PieceDefinitionFactory.create(
       PieceDraft(
         name = pieceName,
-        movements = Vector(firstMovement, secondMovement),
+        movements = MovementDefinitions.create(Vector(firstMovement, secondMovement)),
         initialMovement = Some(duplicatedMovementName),
         maxMovements = Some(5)
       )
@@ -118,7 +120,7 @@ final class PieceDefinitionFactorySpec extends AnyFunSuite:
     val actual = PieceDefinitionFactory.create(
       PieceDraft(
         name = pieceName,
-        movements = Vector(movement),
+        movements = MovementDefinitions.create(Vector(movement)),
         initialMovement = Some(movement.name),
         maxMovements = Some(5)
       )
@@ -130,7 +132,7 @@ final class PieceDefinitionFactorySpec extends AnyFunSuite:
     val first = PieceDefinitionFactory.create(
       PieceDraft(
         name = pieceName,
-        movements = Vector(planMovement),
+        movements = MovementDefinitions.create(Vector(planMovement)),
         initialMovement = Some(verifyMovement),
         maxMovements = Some(5)
       )
@@ -138,7 +140,7 @@ final class PieceDefinitionFactorySpec extends AnyFunSuite:
     val second = PieceDefinitionFactory.create(
       PieceDraft(
         name = pieceName,
-        movements = Vector(planMovement),
+        movements = MovementDefinitions.create(Vector(planMovement)),
         initialMovement = Some(verifyMovement),
         maxMovements = Some(5)
       )
@@ -168,7 +170,7 @@ final class PieceDefinitionFactorySpec extends AnyFunSuite:
   private def createMovementWithTransition(name: String, next: String): MovementDefinition =
     MovementDefinition.createTopLevel(
       name = parseMovementName(name),
-      rules = Vector(parseRule(condition = "ok", next = Some(next))),
+      rules = MovementRules.create(Vector(parseRule(condition = "ok", next = Some(next)))),
       facets = MovementFacets.Empty,
       facetCatalog = FacetCatalog.Empty,
       hasParallel = false,

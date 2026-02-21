@@ -3,8 +3,10 @@ package zain.core.takt.piece
 import org.scalatest.funsuite.AnyFunSuite
 import zain.core.takt.facet.FacetCatalog
 import zain.core.takt.movement.MovementDefinition
+import zain.core.takt.movement.MovementDefinitions
 import zain.core.takt.movement.MovementFacets
 import zain.core.takt.movement.MovementRule
+import zain.core.takt.movement.MovementRules
 import zain.core.takt.primitives.MovementName
 import zain.core.takt.primitives.PieceName
 import zain.core.takt.primitives.TransitionTarget
@@ -111,7 +113,7 @@ final class PieceExecutionStateSpec extends AnyFunSuite:
     PieceDefinitionFactory.create(
       PieceDraft(
         name = parsePieceName("references-takt-always-valid"),
-        movements = Vector(planMovement, implementMovement, verifyMovement),
+        movements = MovementDefinitions.create(Vector(planMovement, implementMovement, verifyMovement)),
         initialMovement = Some(planMovementName),
         maxMovements = Some(10)
       )
@@ -122,7 +124,7 @@ final class PieceExecutionStateSpec extends AnyFunSuite:
   private def createMovement(name: String, next: String): MovementDefinition =
     MovementDefinition.createTopLevel(
       name = parseMovementName(name),
-      rules = Vector(parseRule(condition = "ok", next = Some(next))),
+      rules = MovementRules.create(Vector(parseRule(condition = "ok", next = Some(next)))),
       facets = MovementFacets.Empty,
       facetCatalog = FacetCatalog.Empty,
       hasParallel = false,

@@ -12,11 +12,11 @@ final case class FacetCatalog private (
 ):
   def parseReferences(facets: FacetReferences): Either[PieceDefinitionError, FacetReferences] =
     facets.entries
-      .foldLeft[Either[PieceDefinitionError, Vector[FacetReferenceEntry]]](Right(Vector.empty)) { (acc, entry) =>
+      .foldLeft[Either[PieceDefinitionError, FacetReferenceEntries]](Right(FacetReferenceEntries.Empty)) { (acc, entry) =>
         for
           parsedEntries <- acc
           parsedEntry <- parseReferenceEntry(entry)
-        yield parsedEntries :+ parsedEntry
+        yield parsedEntries ++ FacetReferenceEntries.one(parsedEntry)
       }
       .map(_ => facets)
 
@@ -54,11 +54,11 @@ object FacetCatalog:
   )
 
   def create(
-      personas: Vector[FacetName],
-      policies: Vector[FacetName],
-      knowledge: Vector[FacetName],
-      instructions: Vector[FacetName],
-      outputContracts: Vector[FacetName]
+      personas: FacetNames,
+      policies: FacetNames,
+      knowledge: FacetNames,
+      instructions: FacetNames,
+      outputContracts: FacetNames
   ): FacetCatalog =
     FacetCatalog(
       personas = personas.toSet,
@@ -69,11 +69,11 @@ object FacetCatalog:
     )
 
   def fromDefinitions(
-      personas: Vector[FacetName],
-      policies: Vector[FacetName],
-      knowledge: Vector[FacetName],
-      instructions: Vector[FacetName],
-      outputContracts: Vector[FacetName]
+      personas: FacetNames,
+      policies: FacetNames,
+      knowledge: FacetNames,
+      instructions: FacetNames,
+      outputContracts: FacetNames
   ): FacetCatalog =
     create(
       personas = personas,

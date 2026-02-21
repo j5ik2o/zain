@@ -1,23 +1,23 @@
 package zain.core.takt.piece
 
-import zain.core.takt.movement.MovementDefinition
+import zain.core.takt.movement.MovementDefinitions
 import zain.core.takt.primitives.MaxMovements
 import zain.core.takt.primitives.MovementName
 import zain.core.takt.primitives.PieceName
 
 final case class PieceDefinition private (
     name: PieceName,
-    movements: Vector[MovementDefinition],
+    movements: MovementDefinitions,
     initialMovement: MovementName,
     maxMovements: MaxMovements
 ):
   def movementNames: Set[MovementName] =
-    movements.map(_.name).toSet
+    movements.names
 
 object PieceDefinition:
   private[piece] def create(
       name: PieceName,
-      movements: Vector[MovementDefinition],
+      movements: MovementDefinitions,
       initialMovement: MovementName,
       maxMovements: MaxMovements
   ): PieceDefinition =

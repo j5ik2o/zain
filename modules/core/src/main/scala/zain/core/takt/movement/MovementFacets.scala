@@ -1,30 +1,31 @@
 package zain.core.takt.movement
 
+import zain.core.takt.facet.FacetNames
 import zain.core.takt.primitives.FacetName
 
 final case class MovementFacets private (
     persona: Option[FacetName],
-    policies: Vector[FacetName],
-    knowledge: Vector[FacetName],
+    policies: FacetNames,
+    knowledge: FacetNames,
     instruction: Option[FacetName],
-    outputContracts: Vector[FacetName]
+    outputContracts: FacetNames
 )
 
 object MovementFacets:
   val Empty: MovementFacets = MovementFacets(
     persona = None,
-    policies = Vector.empty,
-    knowledge = Vector.empty,
+    policies = FacetNames.Empty,
+    knowledge = FacetNames.Empty,
     instruction = None,
-    outputContracts = Vector.empty
+    outputContracts = FacetNames.Empty
   )
 
   def create(
       persona: Option[FacetName],
-      policies: Vector[FacetName],
-      knowledge: Vector[FacetName],
+      policies: FacetNames,
+      knowledge: FacetNames,
       instruction: Option[FacetName],
-      outputContracts: Vector[FacetName]
+      outputContracts: FacetNames
   ): MovementFacets =
     MovementFacets(
       persona = persona,

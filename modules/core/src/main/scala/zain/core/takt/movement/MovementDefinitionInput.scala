@@ -6,7 +6,7 @@ import zain.core.takt.primitives.MovementName
 
 final case class MovementDefinitionInput(
     name: MovementName,
-    rules: Vector[MovementRule],
+    rules: MovementRules,
     facets: MovementFacets,
     facetCatalog: FacetCatalog,
     executionMode: MovementExecutionMode
@@ -15,7 +15,7 @@ final case class MovementDefinitionInput(
 object MovementDefinitionInput:
   def fromLegacy(
       name: MovementName,
-      rules: Vector[MovementRule],
+      rules: MovementRules,
       facets: MovementFacets,
       facetCatalog: FacetCatalog,
       hasParallel: Boolean,

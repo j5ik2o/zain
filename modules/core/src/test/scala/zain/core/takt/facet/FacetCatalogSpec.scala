@@ -13,18 +13,18 @@ final class FacetCatalogSpec extends AnyFunSuite:
     val outputContract = parseFacetName("output-contract")
 
     val catalog = FacetCatalog.fromDefinitions(
-      personas = Vector(persona),
-      policies = Vector(policy),
-      knowledge = Vector(knowledge),
-      instructions = Vector(instruction),
-      outputContracts = Vector(outputContract)
+      personas = FacetNames.create(Vector(persona)),
+      policies = FacetNames.create(Vector(policy)),
+      knowledge = FacetNames.create(Vector(knowledge)),
+      instructions = FacetNames.create(Vector(instruction)),
+      outputContracts = FacetNames.create(Vector(outputContract))
     )
     val references = FacetReferences.create(
       persona = Some(persona),
-      policies = Vector(policy),
-      knowledge = Vector(knowledge),
+      policies = FacetNames.create(Vector(policy)),
+      knowledge = FacetNames.create(Vector(knowledge)),
       instruction = Some(instruction),
-      outputContracts = Vector(outputContract)
+      outputContracts = FacetNames.create(Vector(outputContract))
     )
 
     val actual = catalog.parseReferences(references)
@@ -35,18 +35,18 @@ final class FacetCatalogSpec extends AnyFunSuite:
     val knownPolicy = parseFacetName("known-policy")
     val unknownPolicy = parseFacetName("unknown-policy")
     val catalog = FacetCatalog.fromDefinitions(
-      personas = Vector.empty,
-      policies = Vector(knownPolicy),
-      knowledge = Vector.empty,
-      instructions = Vector.empty,
-      outputContracts = Vector.empty
+      personas = FacetNames.Empty,
+      policies = FacetNames.create(Vector(knownPolicy)),
+      knowledge = FacetNames.Empty,
+      instructions = FacetNames.Empty,
+      outputContracts = FacetNames.Empty
     )
     val references = FacetReferences.create(
       persona = None,
-      policies = Vector(unknownPolicy),
-      knowledge = Vector.empty,
+      policies = FacetNames.create(Vector(unknownPolicy)),
+      knowledge = FacetNames.Empty,
       instruction = None,
-      outputContracts = Vector.empty
+      outputContracts = FacetNames.Empty
     )
 
     val actual = catalog.parseReferences(references)
