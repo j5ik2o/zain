@@ -9,7 +9,9 @@ final case class PieceDefinition private (
     name: PieceName,
     movements: MovementDefinitions,
     initialMovement: MovementName,
-    maxMovements: MaxMovements
+    maxMovements: MaxMovements,
+    loopDetection: LoopDetectionConfiguration,
+    loopMonitors: LoopMonitorConfigurations
 ):
   def movementNames: Set[MovementName] =
     movements.names
@@ -19,11 +21,15 @@ object PieceDefinition:
       name: PieceName,
       movements: MovementDefinitions,
       initialMovement: MovementName,
-      maxMovements: MaxMovements
+      maxMovements: MaxMovements,
+      loopDetection: LoopDetectionConfiguration,
+      loopMonitors: LoopMonitorConfigurations
   ): PieceDefinition =
     PieceDefinition(
       name = name,
       movements = movements,
       initialMovement = initialMovement,
-      maxMovements = maxMovements
+      maxMovements = maxMovements,
+      loopDetection = loopDetection,
+      loopMonitors = loopMonitors
     )

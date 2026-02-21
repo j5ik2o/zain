@@ -108,7 +108,40 @@ final class TaktPrimitiveParsersSpec extends AnyFunSuite:
   test("should allow one character rule condition"):
     val actual = TaktPrimitiveParsers.parseRuleCondition("x")
 
-    assert(actual.exists(_.value == "x"))
+    assert(actual.exists(_.breachEncapsulationOfRawValue == "x"))
+
+  test("should parse ai condition expression"):
+    val actual = TaktPrimitiveParsers.parseRuleCondition("""ai("approved")""")
+
+    assert(actual.exists(_.aiConditionText.contains("approved")))
+
+  test("should parse all condition expression"):
+    val actual = TaktPrimitiveParsers.parseRuleCondition("""all("approved")""")
+
+    assert(actual.exists {
+      _.aggregateCondition.contains(
+        zain.core.takt.primitives.RuleCondition.AggregateType.All -> Vector("approved")
+      )
+    })
+
+  test("should parse any condition expression with multiple arguments"):
+    val actual = TaktPrimitiveParsers.parseRuleCondition("""any("approved", "needs_fix")""")
+
+    assert(actual.exists {
+      _.aggregateCondition.contains(
+        zain.core.takt.primitives.RuleCondition.AggregateType.Any -> Vector("approved", "needs_fix")
+      )
+    })
+
+  test("should reject malformed ai condition expression"):
+    val actual = TaktPrimitiveParsers.parseRuleCondition("ai(approved)")
+
+    assert(actual == Left(TaktPrimitiveError.InvalidRuleConditionSyntax))
+
+  test("should reject malformed aggregate condition expression"):
+    val actual = TaktPrimitiveParsers.parseRuleCondition("all(approved)")
+
+    assert(actual == Left(TaktPrimitiveError.InvalidRuleConditionSyntax))
 
   test("should reject empty transition target"):
     val actual = TaktPrimitiveParsers.parseTransitionTarget("")

@@ -128,6 +128,38 @@ final class PieceDefinitionFactorySpec extends AnyFunSuite:
 
     assert(actual == Left(PieceDefinitionError.UndefinedTransitionTarget(target = unknownTarget, from = movement.name)))
 
+  test("should apply default loop detection when loop detection is omitted"):
+    val actual = PieceDefinitionFactory.create(
+      PieceDraft(
+        name = pieceName,
+        movements = MovementDefinitions.create(Vector(planMovement)),
+        initialMovement = Some(planMovement.name),
+        maxMovements = Some(5)
+      )
+    )
+
+    assert(actual.exists(_.loopDetection == LoopDetectionConfiguration.Default))
+
+  test("should reject piece creation when loop monitor cycle references undefined movement"):
+    val unknown = parseMovementName("unknown")
+    val monitor = parseLoopMonitorConfiguration(
+      cycle = Vector(planMovement.name, unknown),
+      threshold = 2,
+      rules = Vector(parseLoopMonitorRule("continue", "plan"))
+    )
+
+    val actual = PieceDefinitionFactory.create(
+      PieceDraft(
+        name = pieceName,
+        movements = MovementDefinitions.create(Vector(planMovement, implementMovement)),
+        initialMovement = Some(planMovement.name),
+        maxMovements = Some(5),
+        loopMonitors = LoopMonitorConfigurations.create(Vector(monitor))
+      )
+    )
+
+    assert(actual == Left(PieceDefinitionError.UndefinedLoopMonitorCycleMovement(unknown)))
+
   test("should return same failure category for same undefined initial movement input"):
     val first = PieceDefinitionFactory.create(
       PieceDraft(
@@ -179,3 +211,32 @@ final class PieceDefinitionFactorySpec extends AnyFunSuite:
     ) match
       case Right(parsed) => parsed
       case Left(error)   => fail(s"movement creation should succeed: $error")
+
+  private def parseLoopMonitorConfiguration(
+      cycle: Vector[MovementName],
+      threshold: Int,
+      rules: Vector[LoopMonitorRule]
+  ): LoopMonitorConfiguration =
+    LoopMonitorConfiguration.create(
+      cycle = cycle,
+      threshold = threshold,
+      judge = parseLoopMonitorJudge(rules)
+    ) match
+      case Right(parsed) => parsed
+      case Left(error)   => fail(s"loop monitor configuration should succeed: $error")
+
+  private def parseLoopMonitorJudge(rules: Vector[LoopMonitorRule]): LoopMonitorJudge =
+    val parsedRules = LoopMonitorRules.create(rules) match
+      case Right(parsed) => parsed
+      case Left(error)   => fail(s"loop monitor rules should succeed: $error")
+
+    LoopMonitorJudge(
+      persona = None,
+      instructionTemplate = None,
+      rules = parsedRules
+    )
+
+  private def parseLoopMonitorRule(condition: String, next: String): LoopMonitorRule =
+    LoopMonitorRule.create(condition = condition, next = next) match
+      case Right(parsed) => parsed
+      case Left(error)   => fail(s"loop monitor rule should succeed: $error")

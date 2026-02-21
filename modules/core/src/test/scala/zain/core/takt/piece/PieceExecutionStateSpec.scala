@@ -7,6 +7,7 @@ import zain.core.takt.movement.MovementDefinitions
 import zain.core.takt.movement.MovementFacets
 import zain.core.takt.movement.MovementRule
 import zain.core.takt.movement.MovementRules
+import zain.core.takt.piece.MovementOutput
 import zain.core.takt.primitives.MovementName
 import zain.core.takt.primitives.PieceName
 import zain.core.takt.primitives.TransitionTarget
@@ -105,6 +106,60 @@ final class PieceExecutionStateSpec extends AnyFunSuite:
 
     assert(actual == Left(PieceExecutionError.AlreadyFinished(PieceExecutionStatus.Completed)))
 
+  test("should record movement output and keep last output immutably"):
+    val started = PieceExecutionState.start(pieceDefinition)
+    val output = parseMovementOutput(matchedRuleIndex = Some(0))
+
+    val actual = started.recordMovementOutput(planMovementName, output)
+
+    assert(actual.movementOutputs.get(planMovementName).contains(output))
+    assert(actual.lastOutput.contains(output))
+    assert(started.lastOutput.isEmpty)
+    assert(started ne actual)
+
+  test("should append user input immutably"):
+    val started = PieceExecutionState.start(pieceDefinition)
+
+    val actual = started.appendUserInput("input")
+
+    assert(actual.userInputs == Vector("input"))
+    assert(started.userInputs.isEmpty)
+    assert(started ne actual)
+
+  test("should record persona session immutably"):
+    val started = PieceExecutionState.start(pieceDefinition)
+
+    val actual = started.recordPersonaSession("reviewer", "session-1")
+
+    assert(actual.personaSessions.get("reviewer").contains("session-1"))
+    assert(started.personaSessions.isEmpty)
+    assert(started ne actual)
+
+  test("should increment movement iteration immutably"):
+    val started = PieceExecutionState.start(pieceDefinition)
+
+    val actual = started.incrementMovementIteration(planMovementName)
+
+    assert(actual.movementIterations.get(planMovementName).exists(_.value == 1))
+    assert(started.movementIterations.isEmpty)
+    assert(started ne actual)
+
+  test("should transition by matched rule index"):
+    val started = PieceExecutionState.start(pieceDefinition)
+    val currentMovement = movementByName(pieceDefinition, planMovementName)
+
+    val actual = started.transitionByMatchedRuleIndex(currentMovement, matchedRuleIndex = 0)
+
+    assert(actual.exists(_.currentMovement == implementMovementName))
+
+  test("should reject transition by matched rule index when rule index is invalid"):
+    val started = PieceExecutionState.start(pieceDefinition)
+    val currentMovement = movementByName(pieceDefinition, planMovementName)
+
+    val actual = started.transitionByMatchedRuleIndex(currentMovement, matchedRuleIndex = 999)
+
+    assert(actual == Left(PieceExecutionError.InvalidRuleIndex(999)))
+
   private def createPieceDefinition(): PieceDefinition =
     val planMovement = createMovement("plan", next = "implement")
     val implementMovement = createMovement("implement", next = "verify")
@@ -148,3 +203,16 @@ final class PieceExecutionStateSpec extends AnyFunSuite:
     MovementRule.create(condition, next) match
       case Right(parsed) => parsed
       case Left(error)   => fail(s"rule parsing should succeed: $error")
+
+  private def parseMovementOutput(matchedRuleIndex: Option[Int]): MovementOutput =
+    MovementOutput.create(
+      content = "output",
+      matchedRuleIndex = matchedRuleIndex
+    ) match
+      case Right(parsed) => parsed
+      case Left(error)   => fail(s"movement output parsing should succeed: $error")
+
+  private def movementByName(pieceDefinition: PieceDefinition, movementName: MovementName): MovementDefinition =
+    pieceDefinition.movements.breachEncapsulationOfValues.find(_.name == movementName) match
+      case Some(movement) => movement
+      case None           => fail(s"movement should exist: ${movementName.value}")

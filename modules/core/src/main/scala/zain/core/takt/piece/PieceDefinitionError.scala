@@ -11,14 +11,31 @@ enum PieceDefinitionError:
   case NonPositiveMaxMovements
   case ConflictingExecutionModes
   case EmptyRuleCondition
+  case InvalidRuleCondition
+  case EmptyRuleAppendix
   case EmptyRuleTransitionTarget
   case MissingTopLevelRuleTransitionTarget
+  case EmptyOutputContractName
+  case EmptyOutputContractFormat
+  case EmptyOutputContractOrder
+  case DuplicateOutputContractItemName(name: String)
   case EmptyPartId
   case EmptyPartTitle
   case EmptyPartInstruction
   case NonPositivePartTimeoutMillis
   case TeamLeaderMaxPartsOutOfRange
   case NonPositiveTeamLeaderTimeoutMillis
+  case NonPositiveArpeggioBatchSize
+  case NonPositiveArpeggioConcurrency
+  case InvalidExecutionModeConfiguration
+  case NonPositiveLoopDetectionMaxConsecutiveSameStep
+  case EmptyLoopMonitorCycle
+  case NonPositiveLoopMonitorThreshold
+  case EmptyLoopMonitorJudgeRules
+  case EmptyLoopMonitorRuleCondition
+  case EmptyLoopMonitorRuleTransitionTarget
+  case UndefinedLoopMonitorCycleMovement(movement: MovementName)
+  case UndefinedLoopMonitorJudgeTarget(target: MovementName)
   case UndefinedPersonaReference(reference: FacetName)
   case UndefinedPolicyReference(reference: FacetName)
   case UndefinedKnowledgeReference(reference: FacetName)

@@ -12,11 +12,18 @@ object PieceDefinitionFactory:
       parsedMovements <- uniqueMovements.parseTransitionTargets
       resolvedInitial <- parsedMovements.parseInitialMovement(draft.initialMovement)
       resolvedMaxMovements <- resolveMaxMovements(draft.maxMovements)
+      resolvedLoopDetection <- resolveLoopDetection(draft.loopDetection)
+      resolvedLoopMonitors <- resolveLoopMonitors(
+        loopMonitors = draft.loopMonitors,
+        movementNames = parsedMovements.names
+      )
     yield PieceDefinition.create(
       name = draft.name,
       movements = parsedMovements,
       initialMovement = resolvedInitial,
-      maxMovements = resolvedMaxMovements
+      maxMovements = resolvedMaxMovements,
+      loopDetection = resolvedLoopDetection,
+      loopMonitors = resolvedLoopMonitors
     )
 
   private def resolveMaxMovements(maxMovements: Option[Int]): Either[PieceDefinitionError, MaxMovements] =
@@ -24,3 +31,16 @@ object PieceDefinitionFactory:
       .parse(maxMovements.getOrElse(DefaultMaxMovements))
       .left
       .map(_ => PieceDefinitionError.NonPositiveMaxMovements)
+
+  private def resolveLoopDetection(
+      loopDetection: Option[LoopDetectionConfiguration]
+  ): Either[PieceDefinitionError, LoopDetectionConfiguration] =
+    loopDetection match
+      case Some(value) => Right(value)
+      case None        => Right(LoopDetectionConfiguration.Default)
+
+  private def resolveLoopMonitors(
+      loopMonitors: LoopMonitorConfigurations,
+      movementNames: Set[zain.core.takt.primitives.MovementName]
+  ): Either[PieceDefinitionError, LoopMonitorConfigurations] =
+    loopMonitors.parseDefinedMovements(movementNames)

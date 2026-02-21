@@ -8,6 +8,7 @@ enum TaktPrimitiveError:
   case EmptyPartTitle
   case EmptyPartInstruction
   case EmptyRuleCondition
+  case InvalidRuleConditionSyntax
   case EmptyTransitionTarget
   case NonPositivePartTimeoutMillis
   case NonPositiveTeamLeaderMaxParts

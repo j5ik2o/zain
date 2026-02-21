@@ -3,6 +3,21 @@ package zain.core.takt.movement
 final case class MovementRules private (
     private val values: Vector[MovementRule]
 ):
+  def isEmpty: Boolean =
+    values.isEmpty
+
+  def nonEmpty: Boolean =
+    values.nonEmpty
+
+  def size: Int =
+    values.size
+
+  def indices: Range =
+    values.indices
+
+  def ruleAt(index: Int): Option[MovementRule] =
+    values.lift(index)
+
   def forall(predicate: MovementRule => Boolean): Boolean =
     values.forall(predicate)
 

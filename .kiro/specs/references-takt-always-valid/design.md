@@ -330,3 +330,21 @@ flowchart LR
 ### E2E
 - Piece生成 → 実行開始 → 遷移完了までの契約通し検証
 - 境界値セット（空文字、1文字、0件、1件、未定義参照）の回帰実行
+
+## 追加設計追補（Rule/Output/Loop）
+### 追加コンポーネント
+| コンポーネント | 役割 |
+|---|---|
+| `RuleCondition` (ADT) | `plain` / `ai` / `all` / `any` を構築時に判別して保持 |
+| `MovementRule` | `appendix` / `requiresUserInput` / `interactiveOnly` を保持 |
+| `OutputContractItem`, `OutputContractItems` | output contract item の検証済み集合を保持 |
+| `RuleEvaluator`, `AggregateEvaluator` | 参照実装互換の評価順で rule index + method を返却 |
+| `MovementOutput` | movement出力と matchedRuleIndex の検証済み保持 |
+| `LoopDetectionConfiguration` | 同一movement連続検出設定を保持 |
+| `LoopMonitorConfiguration`, `LoopMonitorJudge`, `LoopMonitorRule` | cycle/threshold/judge rule を保持し、未定義movement参照を拒否 |
+
+### 追加不変条件
+- `RuleCondition.parse` は `ai()/all()/any()` の構文違反を `InvalidRuleConditionSyntax` で拒否する。
+- `OutputContractItem` は `name/format` 必須、`order` 指定時は空文字不可。
+- `PieceDefinitionFactory` は loop monitor の cycle/judge 遷移先が未定義movementを参照する場合に失敗する。
+- `PieceExecutionState` は `movementOutputs/lastOutput/userInputs/personaSessions/movementIterations` を不変更新APIで更新する。

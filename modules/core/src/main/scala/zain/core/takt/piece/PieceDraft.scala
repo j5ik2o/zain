@@ -8,5 +8,7 @@ final case class PieceDraft(
     name: PieceName,
     movements: MovementDefinitions,
     initialMovement: Option[MovementName],
-    maxMovements: Option[Int]
+    maxMovements: Option[Int],
+    loopDetection: Option[LoopDetectionConfiguration] = None,
+    loopMonitors: LoopMonitorConfigurations = LoopMonitorConfigurations.Empty
 )

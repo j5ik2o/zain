@@ -9,10 +9,17 @@ final case class MovementDefinitionInput(
     rules: MovementRules,
     facets: MovementFacets,
     facetCatalog: FacetCatalog,
-    executionMode: MovementExecutionMode
+    executionMode: MovementExecutionMode,
+    parallel: Option[ParallelConfiguration] = None,
+    arpeggio: Option[ArpeggioConfiguration] = None,
+    outputContractItems: OutputContractItems = OutputContractItems.Empty
 )
 
 object MovementDefinitionInput:
+  @deprecated(
+    "Use MovementDefinitionInput(..., executionMode = ..., parallel = ..., arpeggio = ...) instead.",
+    "0.1.0"
+  )
   def fromLegacy(
       name: MovementName,
       rules: MovementRules,
@@ -32,5 +39,8 @@ object MovementDefinitionInput:
         rules = rules,
         facets = facets,
         facetCatalog = facetCatalog,
-        executionMode = executionMode
+        executionMode = executionMode,
+        parallel = if hasParallel then Some(ParallelConfiguration.Empty) else None,
+        arpeggio = if hasArpeggio then Some(ArpeggioConfiguration.Default) else None,
+        outputContractItems = OutputContractItems.Empty
       )

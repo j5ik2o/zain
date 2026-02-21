@@ -155,6 +155,63 @@ final class MovementDefinitionSpec extends AnyFunSuite:
     assert(arpeggio.isRight)
     assert(withTeamLeader.isRight)
 
+  test("should keep parallel configuration when execution mode is parallel"):
+    val reviewer = MovementDefinition.createNested(
+      name = parseMovementName("reviewer"),
+      rules = movementRulesOf(parseRule(condition = "ok", next = None)),
+      facets = MovementFacets.Empty,
+      facetCatalog = FacetCatalog.Empty,
+      executionMode = MovementExecutionMode.Sequential
+    ) match
+      case Right(parsed) => parsed
+      case Left(error)   => fail(s"nested movement creation should succeed: $error")
+
+    val parallelConfiguration = ParallelConfiguration.create(
+      MovementDefinitions.create(Vector(reviewer))
+    )
+
+    val actual = MovementDefinition.createTopLevel(
+      name = movementName,
+      rules = movementRulesOf(parseRule(condition = "ok", next = Some("verify"))),
+      facets = MovementFacets.Empty,
+      facetCatalog = FacetCatalog.Empty,
+      executionMode = MovementExecutionMode.Parallel,
+      parallel = Some(parallelConfiguration)
+    )
+
+    assert(actual.exists(_.parallel.contains(parallelConfiguration)))
+
+  test("should reject sequential mode when parallel configuration is supplied"):
+    val actual = MovementDefinition.createTopLevel(
+      name = movementName,
+      rules = movementRulesOf(parseRule(condition = "ok", next = Some("verify"))),
+      facets = MovementFacets.Empty,
+      facetCatalog = FacetCatalog.Empty,
+      executionMode = MovementExecutionMode.Sequential,
+      parallel = Some(ParallelConfiguration.Empty)
+    )
+
+    assert(actual == Left(PieceDefinitionError.InvalidExecutionModeConfiguration))
+
+  test("should keep arpeggio configuration when execution mode is arpeggio"):
+    val arpeggioConfiguration = ArpeggioConfiguration.create(
+      batchSize = 2,
+      concurrency = 3
+    ) match
+      case Right(parsed) => parsed
+      case Left(error)   => fail(s"arpeggio configuration should succeed: $error")
+
+    val actual = MovementDefinition.createTopLevel(
+      name = movementName,
+      rules = movementRulesOf(parseRule(condition = "ok", next = Some("verify"))),
+      facets = MovementFacets.Empty,
+      facetCatalog = FacetCatalog.Empty,
+      executionMode = MovementExecutionMode.Arpeggio,
+      arpeggio = Some(arpeggioConfiguration)
+    )
+
+    assert(actual.exists(_.arpeggio.contains(arpeggioConfiguration)))
+
   test("should reject rule creation when condition is empty"):
     val actual = MovementRule.create(
       condition = "",
@@ -372,6 +429,20 @@ final class MovementDefinitionSpec extends AnyFunSuite:
 
     assert(actual == Left(PieceDefinitionError.UndefinedOutputContractReference(unknownOutputContract)))
 
+  test("should keep output contract items on movement definition"):
+    val outputContract = parseOutputContractItem(name = "00-plan.md", format = "plan")
+
+    val actual = MovementDefinition.createTopLevel(
+      name = movementName,
+      rules = movementRulesOf(parseRule(condition = "ok", next = Some("verify"))),
+      facets = MovementFacets.Empty,
+      facetCatalog = emptyFacetCatalog,
+      executionMode = MovementExecutionMode.Sequential,
+      outputContractItems = outputContractItemsOf(outputContract)
+    )
+
+    assert(actual.exists(_.outputContractItems.breachEncapsulationOfValues.map(_.name) == Vector("00-plan.md")))
+
   test("should create movement when all facet references are defined"):
     val persona = parseFacetName("persona")
     val policy = parseFacetName("policy")
@@ -407,6 +478,21 @@ final class MovementDefinitionSpec extends AnyFunSuite:
 
   private def movementRulesOf(values: MovementRule*): MovementRules =
     MovementRules.create(values.toVector)
+
+  private def outputContractItemsOf(values: OutputContractItem*): OutputContractItems =
+    OutputContractItems.create(values.toVector) match
+      case Right(parsed) => parsed
+      case Left(error)   => fail(s"output contract items parsing should succeed: $error")
+
+  private def parseOutputContractItem(name: String, format: String): OutputContractItem =
+    OutputContractItem.create(
+      name = name,
+      format = format,
+      useJudge = None,
+      order = None
+    ) match
+      case Right(parsed) => parsed
+      case Left(error)   => fail(s"output contract item parsing should succeed: $error")
 
   private def facetNamesOf(values: FacetName*): FacetNames =
     FacetNames.create(values.toVector)

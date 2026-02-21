@@ -103,3 +103,55 @@
 - 7.3 TAKT移植ドメインモデルは常に、状態変更操作が既存インスタンスの破壊的更新ではなく新しいインスタンスを返す形で表現されなければならない。
 
 **依存関係:** 1, 2, 3, 4, 5, 6
+
+### 8. Rule意味論の拡張
+
+**目的:** ワークフロー設計者として、`ai()/all()/any()` や対話専用フラグをRuleで表現し、実行時評価に直接利用したい。
+
+**受け入れ条件:**
+- 8.1 Rule条件はプレーン文字列だけでなく `ai("...")` と `all()/any()` を区別して保持しなければならない。
+- 8.2 Ruleは `appendix` / `requiresUserInput` / `interactiveOnly` を保持しなければならない。
+- 8.3 `all()/any()` は単一条件・複数条件の両方を表現できなければならない。
+
+### 9. Output Contractドメイン
+
+**目的:** 実装者として、Movementごとの出力契約をドメイン型で扱い、構築時に不正値を拒否したい。
+
+**受け入れ条件:**
+- 9.1 Movementは output contract item（`name`,`format`,`useJudge`,`order`）のコレクションを保持しなければならない。
+- 9.2 output contract item コレクションはファーストクラスコレクションとして実装されなければならない。
+- 9.3 item名・format・order(指定時) が不正な場合は `Either` で失敗しなければならない。
+
+### 10. 実行時コンテキスト拡張
+
+**目的:** 実行エンジン利用者として、遷移判定に必要な出力履歴・入力履歴・セッション情報を不変状態で保持したい。
+
+**受け入れ条件:**
+- 10.1 `PieceExecutionState` は `movementOutputs` / `lastOutput` / `userInputs` / `personaSessions` / `movementIterations` を保持しなければならない。
+- 10.2 状態更新APIは常に新インスタンスを返さなければならない。
+
+### 11. RuleEvaluator実行順
+
+**目的:** 実行器実装者として、参照実装と同等の優先順でRuleを評価したい。
+
+**受け入れ条件:**
+- 11.1 評価順は `aggregate -> phase3 tag -> phase1 tag -> ai judge -> ai judge fallback` でなければならない。
+- 11.2 評価結果は「一致したrule index + 一致手法」を返さなければならない。
+- 11.3 例外で制御してはならず、失敗は `Either` で表現しなければならない。
+
+### 12. 実行モード構成情報
+
+**目的:** ワークフロー設計者として、Parallel/Arpeggio/TeamLeader の設定をドメイン型で保持し、実行モードとの不整合を防ぎたい。
+
+**受け入れ条件:**
+- 12.1 Parallel/Arpeggio/TeamLeader の各構成情報は独立したドメイン型で定義されなければならない。
+- 12.2 `MovementExecutionMode` と構成情報が矛盾する場合はMovement生成を拒否しなければならない。
+
+### 13. ループ監視設定
+
+**目的:** 実行器実装者として、loop detection / loop monitor の設定を型で表現し、未定義movement参照を構築時に排除したい。
+
+**受け入れ条件:**
+- 13.1 loop detection 設定（最大連続回数・action）をドメイン型として保持しなければならない。
+- 13.2 loop monitor 設定（cycle/threshold/judge rules）をドメイン型として保持しなければならない。
+- 13.3 cycle/judge遷移が未定義movementを参照する場合はPiece生成を拒否しなければならない。

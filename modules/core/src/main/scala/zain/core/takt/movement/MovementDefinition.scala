@@ -3,6 +3,7 @@ package zain.core.takt.movement
 import zain.core.takt.facet.FacetCatalog
 import zain.core.takt.facet.FacetReferences
 import zain.core.takt.piece.PieceDefinitionError
+import zain.core.takt.piece.PieceExecutionError
 import zain.core.takt.primitives.MovementName
 import zain.core.takt.primitives.TransitionTarget
 
@@ -10,7 +11,10 @@ final case class MovementDefinition private (
     name: MovementName,
     rules: MovementRules,
     facets: MovementFacets,
-    executionMode: MovementExecutionMode
+    executionMode: MovementExecutionMode,
+    parallel: Option[ParallelConfiguration],
+    arpeggio: Option[ArpeggioConfiguration],
+    outputContractItems: OutputContractItems
 ):
   def parseTransitionTargets(
       movementNames: Set[MovementName]
@@ -34,6 +38,17 @@ final case class MovementDefinition private (
       case _ =>
         Right(rule)
 
+  def transitionTargetByMatchedRuleIndex(
+      matchedRuleIndex: Int
+  ): Either[PieceExecutionError, TransitionTarget] =
+    rules.ruleAt(matchedRuleIndex) match
+      case None =>
+        Left(PieceExecutionError.InvalidRuleIndex(matchedRuleIndex))
+      case Some(rule) =>
+        rule.next match
+          case Some(target) => Right(target)
+          case None         => Left(PieceExecutionError.RuleWithoutTransitionTarget(matchedRuleIndex))
+
 object MovementDefinition:
   def create(
       input: MovementDefinitionInput,
@@ -46,7 +61,10 @@ object MovementDefinition:
           rules = input.rules,
           facets = input.facets,
           facetCatalog = input.facetCatalog,
-          executionMode = input.executionMode
+          executionMode = input.executionMode,
+          parallel = input.parallel,
+          arpeggio = input.arpeggio,
+          outputContractItems = input.outputContractItems
         )
       case MovementScope.Nested =>
         createNested(
@@ -54,7 +72,10 @@ object MovementDefinition:
           rules = input.rules,
           facets = input.facets,
           facetCatalog = input.facetCatalog,
-          executionMode = input.executionMode
+          executionMode = input.executionMode,
+          parallel = input.parallel,
+          arpeggio = input.arpeggio,
+          outputContractItems = input.outputContractItems
         )
 
   def createTopLevel(
@@ -64,15 +85,43 @@ object MovementDefinition:
       facetCatalog: FacetCatalog,
       executionMode: MovementExecutionMode
   ): Either[PieceDefinitionError, MovementDefinition] =
+    createTopLevel(
+      name = name,
+      rules = rules,
+      facets = facets,
+      facetCatalog = facetCatalog,
+      executionMode = executionMode,
+      parallel = None,
+      arpeggio = None,
+      outputContractItems = OutputContractItems.Empty
+    )
+
+  def createTopLevel(
+      name: MovementName,
+      rules: MovementRules,
+      facets: MovementFacets,
+      facetCatalog: FacetCatalog,
+      executionMode: MovementExecutionMode,
+      parallel: Option[ParallelConfiguration] = None,
+      arpeggio: Option[ArpeggioConfiguration] = None,
+      outputContractItems: OutputContractItems = OutputContractItems.Empty
+  ): Either[PieceDefinitionError, MovementDefinition] =
     create(
       name = name,
       rules = rules,
       facets = facets,
       facetCatalog = facetCatalog,
       executionMode = executionMode,
+      parallel = parallel,
+      arpeggio = arpeggio,
+      outputContractItems = outputContractItems,
       requireTransitionTarget = true
     )
 
+  @deprecated(
+    "Use createTopLevel(..., executionMode = ..., parallel = ..., arpeggio = ..., outputContractItems = ...) instead.",
+    "0.1.0"
+  )
   def createTopLevel(
       name: MovementName,
       rules: MovementRules,
@@ -81,6 +130,31 @@ object MovementDefinition:
       hasParallel: Boolean,
       hasArpeggio: Boolean,
       teamLeader: Option[TeamLeaderConfiguration]
+  ): Either[PieceDefinitionError, MovementDefinition] =
+    createTopLevel(
+      name = name,
+      rules = rules,
+      facets = facets,
+      facetCatalog = facetCatalog,
+      hasParallel = hasParallel,
+      hasArpeggio = hasArpeggio,
+      teamLeader = teamLeader,
+      outputContractItems = OutputContractItems.Empty
+    )
+
+  @deprecated(
+    "Use createTopLevel(..., executionMode = ..., parallel = ..., arpeggio = ..., outputContractItems = ...) instead.",
+    "0.1.0"
+  )
+  def createTopLevel(
+      name: MovementName,
+      rules: MovementRules,
+      facets: MovementFacets,
+      facetCatalog: FacetCatalog,
+      hasParallel: Boolean,
+      hasArpeggio: Boolean,
+      teamLeader: Option[TeamLeaderConfiguration],
+      outputContractItems: OutputContractItems
   ): Either[PieceDefinitionError, MovementDefinition] =
     MovementExecutionMode.resolve(
       hasParallel = hasParallel,
@@ -92,7 +166,10 @@ object MovementDefinition:
         rules = rules,
         facets = facets,
         facetCatalog = facetCatalog,
-        executionMode = executionMode
+        executionMode = executionMode,
+        parallel = if hasParallel then Some(ParallelConfiguration.Empty) else None,
+        arpeggio = if hasArpeggio then Some(ArpeggioConfiguration.Default) else None,
+        outputContractItems = outputContractItems
       )
 
   def createNested(
@@ -102,15 +179,43 @@ object MovementDefinition:
       facetCatalog: FacetCatalog,
       executionMode: MovementExecutionMode
   ): Either[PieceDefinitionError, MovementDefinition] =
+    createNested(
+      name = name,
+      rules = rules,
+      facets = facets,
+      facetCatalog = facetCatalog,
+      executionMode = executionMode,
+      parallel = None,
+      arpeggio = None,
+      outputContractItems = OutputContractItems.Empty
+    )
+
+  def createNested(
+      name: MovementName,
+      rules: MovementRules,
+      facets: MovementFacets,
+      facetCatalog: FacetCatalog,
+      executionMode: MovementExecutionMode,
+      parallel: Option[ParallelConfiguration] = None,
+      arpeggio: Option[ArpeggioConfiguration] = None,
+      outputContractItems: OutputContractItems = OutputContractItems.Empty
+  ): Either[PieceDefinitionError, MovementDefinition] =
     create(
       name = name,
       rules = rules,
       facets = facets,
       facetCatalog = facetCatalog,
       executionMode = executionMode,
+      parallel = parallel,
+      arpeggio = arpeggio,
+      outputContractItems = outputContractItems,
       requireTransitionTarget = false
     )
 
+  @deprecated(
+    "Use createNested(..., executionMode = ..., parallel = ..., arpeggio = ..., outputContractItems = ...) instead.",
+    "0.1.0"
+  )
   def createNested(
       name: MovementName,
       rules: MovementRules,
@@ -119,6 +224,31 @@ object MovementDefinition:
       hasParallel: Boolean,
       hasArpeggio: Boolean,
       teamLeader: Option[TeamLeaderConfiguration]
+  ): Either[PieceDefinitionError, MovementDefinition] =
+    createNested(
+      name = name,
+      rules = rules,
+      facets = facets,
+      facetCatalog = facetCatalog,
+      hasParallel = hasParallel,
+      hasArpeggio = hasArpeggio,
+      teamLeader = teamLeader,
+      outputContractItems = OutputContractItems.Empty
+    )
+
+  @deprecated(
+    "Use createNested(..., executionMode = ..., parallel = ..., arpeggio = ..., outputContractItems = ...) instead.",
+    "0.1.0"
+  )
+  def createNested(
+      name: MovementName,
+      rules: MovementRules,
+      facets: MovementFacets,
+      facetCatalog: FacetCatalog,
+      hasParallel: Boolean,
+      hasArpeggio: Boolean,
+      teamLeader: Option[TeamLeaderConfiguration],
+      outputContractItems: OutputContractItems
   ): Either[PieceDefinitionError, MovementDefinition] =
     MovementExecutionMode.resolve(
       hasParallel = hasParallel,
@@ -130,7 +260,10 @@ object MovementDefinition:
         rules = rules,
         facets = facets,
         facetCatalog = facetCatalog,
-        executionMode = executionMode
+        executionMode = executionMode,
+        parallel = if hasParallel then Some(ParallelConfiguration.Empty) else None,
+        arpeggio = if hasArpeggio then Some(ArpeggioConfiguration.Default) else None,
+        outputContractItems = outputContractItems
       )
 
   private def create(
@@ -139,19 +272,33 @@ object MovementDefinition:
       facets: MovementFacets,
       facetCatalog: FacetCatalog,
       executionMode: MovementExecutionMode,
+      parallel: Option[ParallelConfiguration],
+      arpeggio: Option[ArpeggioConfiguration],
+      outputContractItems: OutputContractItems,
       requireTransitionTarget: Boolean
   ): Either[PieceDefinitionError, MovementDefinition] =
     for
+      _ <- parseExecutionModeConfiguration(
+        executionMode = executionMode,
+        parallel = parallel,
+        arpeggio = arpeggio
+      )
       parsedRules <- parseRuleTransitionTargets(
         rules = rules,
         requireTransitionTarget = requireTransitionTarget
       )
       parsedFacetReferences <- facetCatalog.parseReferences(toFacetReferences(facets))
+      parsedOutputContractItems <- OutputContractItems.create(
+        outputContractItems.breachEncapsulationOfValues
+      )
     yield MovementDefinition(
       name = name,
       rules = parsedRules,
       facets = toMovementFacets(parsedFacetReferences),
-      executionMode = executionMode
+      executionMode = executionMode,
+      parallel = resolvedParallelConfiguration(executionMode, parallel),
+      arpeggio = resolvedArpeggioConfiguration(executionMode, arpeggio),
+      outputContractItems = parsedOutputContractItems
     )
 
   private def parseRuleTransitionTargets(
@@ -160,6 +307,45 @@ object MovementDefinition:
   ): Either[PieceDefinitionError, MovementRules] =
     if !requireTransitionTarget || rules.forall(_.next.nonEmpty) then Right(rules)
     else Left(PieceDefinitionError.MissingTopLevelRuleTransitionTarget)
+
+  private def parseExecutionModeConfiguration(
+      executionMode: MovementExecutionMode,
+      parallel: Option[ParallelConfiguration],
+      arpeggio: Option[ArpeggioConfiguration]
+  ): Either[PieceDefinitionError, Unit] =
+    executionMode match
+      case MovementExecutionMode.Sequential =>
+        if parallel.isEmpty && arpeggio.isEmpty then Right(())
+        else Left(PieceDefinitionError.InvalidExecutionModeConfiguration)
+      case MovementExecutionMode.Parallel =>
+        if arpeggio.nonEmpty then Left(PieceDefinitionError.InvalidExecutionModeConfiguration)
+        else Right(())
+      case MovementExecutionMode.Arpeggio =>
+        if parallel.nonEmpty then Left(PieceDefinitionError.InvalidExecutionModeConfiguration)
+        else Right(())
+      case MovementExecutionMode.TeamLeader(_) =>
+        if parallel.isEmpty && arpeggio.isEmpty then Right(())
+        else Left(PieceDefinitionError.InvalidExecutionModeConfiguration)
+
+  private def resolvedParallelConfiguration(
+      executionMode: MovementExecutionMode,
+      parallel: Option[ParallelConfiguration]
+  ): Option[ParallelConfiguration] =
+    executionMode match
+      case MovementExecutionMode.Parallel =>
+        Some(parallel.getOrElse(ParallelConfiguration.Empty))
+      case _ =>
+        None
+
+  private def resolvedArpeggioConfiguration(
+      executionMode: MovementExecutionMode,
+      arpeggio: Option[ArpeggioConfiguration]
+  ): Option[ArpeggioConfiguration] =
+    executionMode match
+      case MovementExecutionMode.Arpeggio =>
+        Some(arpeggio.getOrElse(ArpeggioConfiguration.Default))
+      case _ =>
+        None
 
   private def toFacetReferences(facets: MovementFacets): FacetReferences =
     FacetReferences.create(
