@@ -56,9 +56,7 @@ object RuleCondition:
             aggregateArgs = aggregateArgs
           )
         case _ =>
-          if looksLikeAiSyntax(value) || looksLikeAggregateSyntax(value) then
-            Left(TaktPrimitiveError.InvalidRuleConditionSyntax)
-          else Right(RuleCondition.Plain(value))
+          Right(RuleCondition.Plain(value))
 
   private def parseAggregateCondition(
       aggregateTypeText: String,
@@ -88,9 +86,3 @@ object RuleCondition:
 
     if parsed.isEmpty then Left(TaktPrimitiveError.InvalidRuleConditionSyntax)
     else Right(parsed)
-
-  private def looksLikeAiSyntax(value: String): Boolean =
-    value.startsWith("ai(") || value.startsWith("ai（")
-
-  private def looksLikeAggregateSyntax(value: String): Boolean =
-    value.startsWith("all(") || value.startsWith("any(")

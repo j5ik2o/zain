@@ -100,18 +100,18 @@ final class RuleEvaluator(
           case None =>
             Right(None)
           case Some(judgeIndex) =>
-            aiConditions.lift(judgeIndex) match
-              case Some((ruleIndex, _)) =>
-                Right(
-                  Some(
-                    RuleMatch(
-                      index = ruleIndex,
-                      method = RuleMatchMethod.AiJudge
-                    )
+            if judgeIndex >= 0 && judgeIndex < aiConditions.size then
+              val (ruleIndex, _) = aiConditions(judgeIndex)
+              Right(
+                Some(
+                  RuleMatch(
+                    index = ruleIndex,
+                    method = RuleMatchMethod.AiJudge
                   )
                 )
-              case None =>
-                Left(PieceExecutionError.InvalidAiJudgeDecision(judgeIndex, aiConditions.size))
+              )
+            else
+              Right(None)
 
   private def detectAiFallbackMatch(
       agentContent: String
@@ -120,8 +120,7 @@ final class RuleEvaluator(
       .flatMap(index =>
         movement.rules.ruleAt(index).flatMap: rule =>
           if !isSelectableRule(index) then None
-          else
-            Some((index, rule.condition.breachEncapsulationOfRawValue))
+          else Some((index, rule.condition.breachEncapsulationOfRawValue))
       )
       .toVector
 
@@ -141,8 +140,8 @@ final class RuleEvaluator(
           case None =>
             Right(None)
           case Some(judgeIndex) =>
-            allConditions.lift(judgeIndex) match
-              case Some((ruleIndex, _)) =>
+            if judgeIndex >= 0 && judgeIndex < allConditions.size then
+                val (ruleIndex, _) = allConditions(judgeIndex)
                 Right(
                   Some(
                     RuleMatch(
@@ -151,8 +150,7 @@ final class RuleEvaluator(
                     )
                   )
                 )
-              case None =>
-                Left(PieceExecutionError.InvalidAiJudgeDecision(judgeIndex, allConditions.size))
+            else Right(None)
 
   private def isSelectableRule(ruleIndex: Int): Boolean =
     movement.rules.ruleAt(ruleIndex).exists(rule => context.interactive || !rule.interactiveOnly)

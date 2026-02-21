@@ -9,7 +9,6 @@ enum PieceDefinitionError:
   case InitialMovementNotFound(initialMovement: MovementName)
   case UndefinedTransitionTarget(target: MovementName, from: MovementName)
   case NonPositiveMaxMovements
-  case ConflictingExecutionModes
   case EmptyRuleCondition
   case InvalidRuleCondition
   case EmptyRuleAppendix
@@ -22,6 +21,7 @@ enum PieceDefinitionError:
   case EmptyPartId
   case EmptyPartTitle
   case EmptyPartInstruction
+  case InvalidPartPermissionMode(value: String)
   case NonPositivePartTimeoutMillis
   case TeamLeaderMaxPartsOutOfRange
   case NonPositiveTeamLeaderTimeoutMillis
@@ -30,6 +30,7 @@ enum PieceDefinitionError:
   case InvalidExecutionModeConfiguration
   case NonPositiveLoopDetectionMaxConsecutiveSameStep
   case EmptyLoopMonitorCycle
+  case LoopMonitorCycleRequiresAtLeastTwoMovements
   case NonPositiveLoopMonitorThreshold
   case EmptyLoopMonitorJudgeRules
   case EmptyLoopMonitorRuleCondition

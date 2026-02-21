@@ -218,7 +218,7 @@ final class RuleEvaluatorSpec extends AnyFunSuite:
 
     assert(actual == Left(PieceExecutionError.RuleNotMatched(movement.name)))
 
-  test("should reject out of bounds ai judge decision"):
+  test("should treat out of bounds ai judge decision as no match"):
     val movement = createMovementDefinition(
       name = "review",
       rules = MovementRules.create(
@@ -240,7 +240,7 @@ final class RuleEvaluatorSpec extends AnyFunSuite:
 
     val actual = evaluator.evaluate(agentContent = "agent output", tagContent = "")
 
-    assert(actual == Left(PieceExecutionError.InvalidAiJudgeDecision(index = 9, conditionCount = 2)))
+    assert(actual == Left(PieceExecutionError.RuleNotMatched(movement.name)))
 
   private def createState(movement: MovementDefinition): PieceExecutionState =
     val piece = PieceDefinitionFactory.create(

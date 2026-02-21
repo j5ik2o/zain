@@ -73,32 +73,6 @@ final class MovementDefinitionSpec extends AnyFunSuite:
 
     assert(actual.isRight)
 
-  test("should resolve execution mode from legacy style flags"):
-    val actual = MovementExecutionMode.resolve(
-      hasParallel = false,
-      hasArpeggio = false,
-      teamLeader = None
-    )
-
-    assert(actual == Right(MovementExecutionMode.Sequential))
-
-  test("should reject execution mode resolve when multiple execution modes are selected"):
-    val teamLeader = createTeamLeaderConfiguration(maxParts = 2, timeoutMillis = 90000)
-
-    val parallelAndArpeggio = MovementExecutionMode.resolve(
-      hasParallel = true,
-      hasArpeggio = true,
-      teamLeader = None
-    )
-    val parallelAndTeamLeader = MovementExecutionMode.resolve(
-      hasParallel = true,
-      hasArpeggio = false,
-      teamLeader = Some(teamLeader)
-    )
-
-    assert(parallelAndArpeggio == Left(PieceDefinitionError.ConflictingExecutionModes))
-    assert(parallelAndTeamLeader == Left(PieceDefinitionError.ConflictingExecutionModes))
-
   test("should create top level movement with explicit execution mode API"):
     val teamLeader = createTeamLeaderConfiguration(maxParts = 2, timeoutMillis = 90000)
 
@@ -234,21 +208,6 @@ final class MovementDefinitionSpec extends AnyFunSuite:
     )
 
     assert(actual.isRight)
-
-  test("should return same failure category for same conflicting execution mode resolve input"):
-    val first = MovementExecutionMode.resolve(
-      hasParallel = true,
-      hasArpeggio = true,
-      teamLeader = None
-    )
-    val second = MovementExecutionMode.resolve(
-      hasParallel = true,
-      hasArpeggio = true,
-      teamLeader = None
-    )
-
-    assert(first == Left(PieceDefinitionError.ConflictingExecutionModes))
-    assert(second == first)
 
   test("should reject movement creation when policy reference is undefined"):
     val knownPolicy = parseFacetName("coding")

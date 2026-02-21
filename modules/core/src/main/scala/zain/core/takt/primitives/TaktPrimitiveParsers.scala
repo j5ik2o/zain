@@ -19,6 +19,9 @@ object TaktPrimitiveParsers:
   def parsePartInstruction(value: String): Either[TaktPrimitiveError, PartInstruction] =
     PartInstruction.parse(value)
 
+  def parsePartPermissionMode(value: String): Either[TaktPrimitiveError, PartPermissionMode] =
+    PartPermissionMode.parse(value)
+
   def parsePartTimeoutMillis(value: Int): Either[TaktPrimitiveError, PartTimeoutMillis] =
     PartTimeoutMillis.parse(value)
 

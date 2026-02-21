@@ -71,14 +71,22 @@ final class PieceExecutionStateSpec extends AnyFunSuite:
     assert(actual.iteration.value == 1)
     assert(started ne actual)
 
-  test("should transition to defined movement and increment iteration"):
+  test("should transition to defined movement without incrementing iteration"):
     val started = PieceExecutionState.start(pieceDefinition)
 
     val actual = started.transitionTo(target = TransitionTarget.Movement(implementMovementName))
 
     assert(actual.exists(_.status == PieceExecutionStatus.Running))
     assert(actual.exists(_.currentMovement == implementMovementName))
+    assert(actual.exists(_.iteration.value == 0))
+
+  test("should increment iteration and movement iteration when current movement execution starts"):
+    val started = PieceExecutionState.start(pieceDefinition)
+
+    val actual = started.startCurrentMovementExecution
+
     assert(actual.exists(_.iteration.value == 1))
+    assert(actual.exists(_.movementIterations.get(planMovementName).exists(_.value == 1)))
 
   test("should return new instance when transition is applied"):
     val started = PieceExecutionState.start(pieceDefinition)
@@ -127,6 +135,26 @@ final class PieceExecutionStateSpec extends AnyFunSuite:
     assert(started.userInputs.isEmpty)
     assert(started ne actual)
 
+  test("should keep at most 100 user inputs and evict oldest one"):
+    val started = PieceExecutionState.start(pieceDefinition)
+    val filled = (1 to 100).foldLeft(started) { (acc, index) =>
+      acc.appendUserInput(s"input-$index")
+    }
+
+    val actual = filled.appendUserInput("overflow")
+
+    assert(actual.userInputs.size == 100)
+    assert(actual.userInputs.headOption.contains("input-2"))
+    assert(actual.userInputs.lastOption.contains("overflow"))
+
+  test("should truncate user input to 10000 characters"):
+    val started = PieceExecutionState.start(pieceDefinition)
+    val longInput = "x" * 10050
+
+    val actual = started.appendUserInput(longInput)
+
+    assert(actual.userInputs.headOption.exists(_.length == 10000))
+
   test("should record persona session immutably"):
     val started = PieceExecutionState.start(pieceDefinition)
 
@@ -152,6 +180,8 @@ final class PieceExecutionStateSpec extends AnyFunSuite:
     val actual = started.transitionByMatchedRuleIndex(currentMovement, matchedRuleIndex = 0)
 
     assert(actual.exists(_.currentMovement == implementMovementName))
+    assert(actual.exists(_.iteration.value == 1))
+    assert(actual.exists(_.movementIterations.get(planMovementName).exists(_.value == 1)))
 
   test("should reject transition by matched rule index when rule index is invalid"):
     val started = PieceExecutionState.start(pieceDefinition)
@@ -160,6 +190,21 @@ final class PieceExecutionStateSpec extends AnyFunSuite:
     val actual = started.transitionByMatchedRuleIndex(currentMovement, matchedRuleIndex = 999)
 
     assert(actual == Left(PieceExecutionError.InvalidRuleIndex(999)))
+
+  test("should reject transition by matched rule index when movement definition is not current movement"):
+    val started = PieceExecutionState.start(pieceDefinition)
+    val differentMovement = movementByName(pieceDefinition, implementMovementName)
+
+    val actual = started.transitionByMatchedRuleIndex(differentMovement, matchedRuleIndex = 0)
+
+    assert(
+      actual == Left(
+        PieceExecutionError.MovementDefinitionMismatch(
+          currentMovement = planMovementName,
+          providedMovement = implementMovementName
+        )
+      )
+    )
 
   private def createPieceDefinition(): PieceDefinition =
     val planMovement = createMovement("plan", next = "implement")

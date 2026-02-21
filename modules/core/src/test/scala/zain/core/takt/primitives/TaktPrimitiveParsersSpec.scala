@@ -100,6 +100,16 @@ final class TaktPrimitiveParsersSpec extends AnyFunSuite:
 
     assert(actual.exists(_.value == 1))
 
+  test("should parse supported part permission mode"):
+    val actual = TaktPrimitiveParsers.parsePartPermissionMode("readonly")
+
+    assert(actual.contains(PartPermissionMode.ReadOnly))
+
+  test("should reject unsupported part permission mode"):
+    val actual = TaktPrimitiveParsers.parsePartPermissionMode("admin")
+
+    assert(actual == Left(TaktPrimitiveError.InvalidPartPermissionMode("admin")))
+
   test("should reject empty rule condition"):
     val actual = TaktPrimitiveParsers.parseRuleCondition("")
 
@@ -133,10 +143,10 @@ final class TaktPrimitiveParsersSpec extends AnyFunSuite:
       )
     })
 
-  test("should reject malformed ai condition expression"):
+  test("should treat malformed ai condition expression as plain condition"):
     val actual = TaktPrimitiveParsers.parseRuleCondition("ai(approved)")
 
-    assert(actual == Left(TaktPrimitiveError.InvalidRuleConditionSyntax))
+    assert(actual.exists(_.breachEncapsulationOfRawValue == "ai(approved)"))
 
   test("should reject malformed aggregate condition expression"):
     val actual = TaktPrimitiveParsers.parseRuleCondition("all(approved)")

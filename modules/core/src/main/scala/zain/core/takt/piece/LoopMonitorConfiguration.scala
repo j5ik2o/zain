@@ -38,6 +38,7 @@ object LoopMonitorConfiguration:
       cycle: Vector[MovementName]
   ): Either[PieceDefinitionError, Vector[MovementName]] =
     if cycle.isEmpty then Left(PieceDefinitionError.EmptyLoopMonitorCycle)
+    else if cycle.size < 2 then Left(PieceDefinitionError.LoopMonitorCycleRequiresAtLeastTwoMovements)
     else Right(cycle)
 
   private def parseThreshold(value: Int): Either[PieceDefinitionError, Int] =

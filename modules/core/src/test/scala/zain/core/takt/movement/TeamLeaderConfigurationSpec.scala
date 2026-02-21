@@ -2,6 +2,7 @@ package zain.core.takt.movement
 
 import org.scalatest.funsuite.AnyFunSuite
 import zain.core.takt.piece.PieceDefinitionError
+import zain.core.takt.primitives.PartPermissionMode
 
 final class TeamLeaderConfigurationSpec extends AnyFunSuite:
   test("should create team leader configuration when max parts and timeout are valid"):
@@ -46,3 +47,21 @@ final class TeamLeaderConfigurationSpec extends AnyFunSuite:
 
     assert(first == Left(PieceDefinitionError.TeamLeaderMaxPartsOutOfRange))
     assert(second == first)
+
+  test("should parse part permission mode when value is supported"):
+    val actual = TeamLeaderConfiguration.create(
+      maxParts = 2,
+      timeoutMillis = 600000,
+      partPermissionMode = Some("edit")
+    )
+
+    assert(actual.exists(_.partPermissionMode.contains(PartPermissionMode.Edit)))
+
+  test("should reject team leader configuration when part permission mode is unsupported"):
+    val actual = TeamLeaderConfiguration.create(
+      maxParts = 2,
+      timeoutMillis = 600000,
+      partPermissionMode = Some("admin")
+    )
+
+    assert(actual == Left(PieceDefinitionError.InvalidPartPermissionMode("admin")))

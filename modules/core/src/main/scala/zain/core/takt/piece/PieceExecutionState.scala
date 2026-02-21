@@ -34,6 +34,21 @@ final case class PieceExecutionState private (
   def withIteration(nextIteration: IterationCount): PieceExecutionState =
     copy(iteration = nextIteration)
 
+  def startCurrentMovementExecution: Either[PieceExecutionError, PieceExecutionState] =
+    status match
+      case PieceExecutionStatus.Running =>
+        val currentIteration = movementIterations.getOrElse(currentMovement, IterationCount.Zero)
+        val nextMovementIteration = currentIteration.increment
+
+        Right(
+          copy(
+            iteration = iteration.increment,
+            movementIterations = movementIterations.updated(currentMovement, nextMovementIteration)
+          )
+        )
+      case terminalStatus =>
+        Left(PieceExecutionError.AlreadyFinished(terminalStatus))
+
   def recordMovementOutput(
       movementName: MovementName,
       movementOutput: MovementOutput
@@ -44,7 +59,13 @@ final case class PieceExecutionState private (
     )
 
   def appendUserInput(input: String): PieceExecutionState =
-    copy(userInputs = userInputs :+ input)
+    val truncated = input.take(PieceExecutionState.MaxUserInputLength)
+    val nextInputs =
+      if userInputs.size >= PieceExecutionState.MaxUserInputs then
+        userInputs.tail :+ truncated
+      else userInputs :+ truncated
+
+    copy(userInputs = nextInputs)
 
   def recordPersonaSession(
       persona: String,
@@ -73,10 +94,7 @@ final case class PieceExecutionState private (
             markAborted
           case TransitionTarget.Movement(nextMovement) =>
             if allowedMovements.contains(nextMovement) then
-              Right(
-                copy(currentMovement = nextMovement)
-                  .withIteration(iteration.increment)
-              )
+              Right(copy(currentMovement = nextMovement))
             else Left(PieceExecutionError.UndefinedTransitionMovement(nextMovement))
       case terminalStatus =>
         Left(PieceExecutionError.AlreadyFinished(terminalStatus))
@@ -85,11 +103,24 @@ final case class PieceExecutionState private (
       movementDefinition: zain.core.takt.movement.MovementDefinition,
       matchedRuleIndex: Int
   ): Either[PieceExecutionError, PieceExecutionState] =
-    movementDefinition
-      .transitionTargetByMatchedRuleIndex(matchedRuleIndex)
-      .flatMap(transitionTo)
+    if movementDefinition.name != currentMovement then
+      Left(
+        PieceExecutionError.MovementDefinitionMismatch(
+          currentMovement = currentMovement,
+          providedMovement = movementDefinition.name
+        )
+      )
+    else
+      movementDefinition
+        .transitionTargetByMatchedRuleIndex(matchedRuleIndex)
+        .flatMap(target =>
+          startCurrentMovementExecution.flatMap(_.transitionTo(target))
+        )
 
 object PieceExecutionState:
+  private val MaxUserInputs = 100
+  private val MaxUserInputLength = 10000
+
   def start(pieceDefinition: PieceDefinition): PieceExecutionState =
     PieceExecutionState(
       pieceName = pieceDefinition.name,

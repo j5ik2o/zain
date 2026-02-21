@@ -63,12 +63,23 @@ final class LoopMonitorConfigurationsSpec extends AnyFunSuite:
     val judge = parseLoopMonitorJudge(Vector(parseLoopMonitorRule("continue", "plan")))
 
     val actual = LoopMonitorConfiguration.create(
-      cycle = Vector(plan),
+      cycle = Vector(plan, implement),
       threshold = 0,
       judge = judge
     )
 
     assert(actual == Left(PieceDefinitionError.NonPositiveLoopMonitorThreshold))
+
+  test("should reject loop monitor configuration when cycle has only one movement"):
+    val judge = parseLoopMonitorJudge(Vector(parseLoopMonitorRule("continue", "plan")))
+
+    val actual = LoopMonitorConfiguration.create(
+      cycle = Vector(plan),
+      threshold = 2,
+      judge = judge
+    )
+
+    assert(actual == Left(PieceDefinitionError.LoopMonitorCycleRequiresAtLeastTwoMovements))
 
   test("should reject loop monitor judge when rules are empty"):
     val actual = LoopMonitorRules.create(Vector.empty)
